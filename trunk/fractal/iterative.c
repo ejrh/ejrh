@@ -75,6 +75,9 @@ static int iterative_next_pixel(int slot, double *zx, double *zy, double *cx, do
 {
     DRAWING *drawing = (DRAWING *) baton;
     
+    if (drawing->quota <= 0)
+        return 0;
+    
 restart:
     if (drawing->i >= drawing->height)
     {
@@ -86,11 +89,7 @@ restart:
         drawing->iteration_depth *= ITERATION_DEPTH_FACTOR;
         if (drawing->iteration_depth > drawing->window->depth)
             drawing->iteration_depth = drawing->window->depth;
-        pixels_done = 0;
     }
-    
-    if (drawing->quota <= 0 || drawing->i >= drawing->height)
-        return 0;
     
     drawing->get_point(drawing->fractal, drawing->j, drawing->i, zx, zy, cx, cy);
 
