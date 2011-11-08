@@ -77,12 +77,21 @@ HASH *create_hash(int max, KEY_TYPE key_type)
 {
     int i;
     HASH *hash = malloc (sizeof (HASH));
+    if (!hash)
+        return NULL;
     
+    if (max < 1)  /* For sanity. */
+        max = 1;
     hash->max = max;
     hash->num = 0;
     hash->key_type = key_type;
     
     hash->entries = malloc(sizeof (HASH_ENTRY) * max);
+    if (!hash->entries)
+    {
+        free(hash);
+        return NULL;
+    }
     
     for (i = 0; i < hash->max; i++)
     {
