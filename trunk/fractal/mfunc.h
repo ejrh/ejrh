@@ -69,7 +69,7 @@ extern int mfunc_direct(double zx, double zy, double cx, double cy, int max_iter
 extern int mfunc_direct_float(double zx, double zy, double cx, double cy, int max_iterations, double *fx, double *fy);
 
 /**
- * Direct Mandelbrot function using fixed point arithmetic.
+ * Direct Mandelbrot function using fixed point arithmetic.  See @a mfunc_int.c for implementation details.
  */
 extern int mfunc_direct_int(double zx, double zy, double cx, double cy, int max_iterations, double *fx, double *fy);
 
