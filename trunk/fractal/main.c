@@ -66,6 +66,16 @@ static struct {
 static int num_mfunc_modes;
 
 
+#define MIN_DEPTH_MODE 6
+#define MAX_DEPTH_MODE 14
+
+/** The depth is 2 to the power of the depth mode. */
+static int get_depth(int depth_mode)
+{
+    return 1 << depth_mode;
+}
+
+
 typedef struct OPTIONS
 {
     WINDOW window;
@@ -81,8 +91,6 @@ typedef struct OPTIONS
     int current_mfunc_mode;
     int current_depth_mode;
 
-    int max;
-    
     int benchmark;
     int benchmark_loops;
 } OPTIONS;
@@ -189,7 +197,7 @@ void restart(OPTIONS *options, int new_mode)
     if (options->fractal != NULL)
         fractal_modes[options->current_fractal_mode].destroy(options->fractal);
     
-    options->window.depth = options->max ? (256*256) : 256;
+    options->window.depth = get_depth(options->current_depth_mode);
     
     if (fractal_modes[options->current_fractal_mode].type == JULIA)
         options->fractal = julia_create(&options->window, options->mandelbrot_x, options->mandelbrot_y);
@@ -235,9 +243,7 @@ static OPTIONS *create_options(void)
     options->current_fractal_mode = 0;
     options->current_draw_mode = 0;
     options->current_mfunc_mode = 0;
-    options->current_depth_mode = 0;
-
-    options->max = 0;
+    options->current_depth_mode = MIN_DEPTH_MODE;
     
     options->benchmark = 0;
     options->benchmark_loops = 5;
@@ -467,7 +473,18 @@ int main(int argc, char *argv[])
                 running = 0;
             else if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_1)
             {
-                options->max = !options->max;
+                if (evt.key.keysym.mod & KMOD_SHIFT)
+                {
+                    options->current_depth_mode--;
+                    if (options->current_depth_mode < MIN_DEPTH_MODE)
+                        options->current_depth_mode = MAX_DEPTH_MODE;
+                }
+                else
+                {
+                    options->current_depth_mode++;
+                    if (options->current_depth_mode > MAX_DEPTH_MODE)
+                        options->current_depth_mode = MIN_DEPTH_MODE;
+                }
                 fade_screen(options);
                 restart(options, options->current_draw_mode);
             }
