@@ -57,6 +57,8 @@ static GALAXY *create_solar_system()
     
     g->radius = 2.5E11;
     
+    g->gravity_well = g->stars[0];
+    
     return g;
 }
 
@@ -97,6 +99,8 @@ static GALAXY *create_solar_system_2()
     //blow_up_star(g, g->stars[9], 10, 10.0);
     
     g->radius = 7E12;
+    
+    g->gravity_well = g->stars[0];
     
     return g;
 }

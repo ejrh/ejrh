@@ -24,6 +24,7 @@ typedef struct GALAXY
     VECTOR barycentre;
     double mass;
     double time;
+    STAR *gravity_well;
 } GALAXY;
 
 
