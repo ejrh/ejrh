@@ -11,7 +11,7 @@ typedef struct STAR
     VECTOR pos;
     VECTOR vel;
     double mass;
-    double size;
+    double radius;
     unsigned char rgb[3];
 } STAR;
 
@@ -23,6 +23,7 @@ typedef struct GALAXY
     double radius;
     VECTOR barycentre;
     double mass;
+    double time;
 } GALAXY;
 
 

@@ -16,3 +16,9 @@ avi:
 
 clean:
 	rm -f $(OBJ)
+
+opt:
+	$(MAKE) all OPT=-O9
+
+profile:
+	$(MAKE) all "OPT=-g -pg"

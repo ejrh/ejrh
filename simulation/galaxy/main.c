@@ -66,14 +66,14 @@ static GALAXY *create_solar_system_2()
     int i;
     
     STAR data[] = {
-        { "Sol", { -6.185971372636502E+08,  7.053427694221177E+07,  2.338221077370279E+06 }, {  2.007312008802111E+00, -1.050997984989123E+01, -2.364368911319387E-02 },  1.98910E+30, 1.0, { 255,255,0 } },
+        { "Sol", { -6.185971372636502E+08,  7.053427694221177E+07,  2.338221077370279E+06 }, {  2.007312008802111E+00, -1.050997984989123E+01, -2.364368911319387E-02 },  1.98910E+30, 6.960E+08, { 255,255,0 } },
         { "Mercury", {  1.284273743509015E+10, -6.652395322379692E+10, -6.673910195541095E+09 }, {  3.798138838776709E+04,  1.213699750496125E+04, -2.492355276317566E+03 },  3.30200E+23, 1.0, { 255,255,255 } },
         { "Venus", { -1.007411018134462E+11, -3.996141895535587E+10,  5.232264116797000E+09 }, {  1.276627109059595E+04, -3.268876952904768E+04, -1.184370543035742E+03 },  4.86850E+24, 1.0, { 0,255,0 } },
         { "Earth", { -1.132094265214519E+11,  9.548289411980477E+10, -3.369847273975611E+05 }, { -1.973662621796277E+04, -2.285956152047924E+04,  1.083328102204462E+00 },  5.97360E+24, 1.0, { 0,0,255 } },
         { "Moon", { -1.128423333235537E+11,  9.564765604362176E+10,  3.290122818410397E+07 }, { -2.015398219667083E+04, -2.198526562956678E+04, -3.467219883073369E+01 }, 734.9E+20, 1.73753E+06, { 255,255,255 } },
-        { "Mars", {  1.537029064731368E+11, -1.385220649320696E+11, -6.691185912844039E+09 }, {  1.710943707271193E+04,  2.009092334165851E+04,  1.110321260857638E+00 },  6.41850E+23, 1.0, { 255,0,0 } },
-        { "Phobos", {  1.536959115224088E+11, -1.385277512615332E+11, -6.688139217549749E+09 }, {  1.821267511026613E+04,  1.840628710864996E+04, -6.153766657189825E+02 },  1.08E+20, 1.11E+04, { 255,255,255 } },
-        { "Deimos", {   1.537228570552382E+11, -1.385137585369931E+11, -6.700297482944936E+09 }, {  1.672568339339906E+04,  2.134989237437802E+04,  3.082438185365639E+02, },  1.80E+20, 6.0E+3, { 255,255,255 } },
+        { "Mars", {  1.537029064731368E+11, -1.385220649320696E+11, -6.691185912844039E+09 }, {  1.710943707271193E+04,  2.009092334165851E+04,  1.110321260857638E+00 },  6.41850E+23, 1.0, { 255,64,64 } },
+        { "Phobos", {  1.536959115224088E+11, -1.385277512615332E+11, -6.688139217549749E+09 }, {  1.821267511026613E+04,  1.840628710864996E+04, -6.153766657189825E+02 },  1.08E+20, 1.11E+04, { 255,0,255 } },
+        { "Deimos", {  1.537228570552382E+11, -1.385137585369931E+11, -6.700297482944936E+09 }, {  1.672568339339906E+04,  2.134989237437802E+04,  3.082438185365639E+02, },  1.80E+20, 6.0E+03, { 128,128,128 } },
         { "Jupiter", {  7.256525012200071E+11,  1.426602644693087E+11, -1.684232596585476E+10 }, { -2.678138016678334E+03,  1.344328751121466E+04,  4.061932828932413E+00 },  1.89813E+27, 1.0, { 255,255,255 } },
         { "Io", { 7.260689038329406E+11,  1.425983883181777E+11, -1.683880033370411E+10 }, { -6.782917579410297E+01,  3.060258721665560E+04,  6.585420109319209E+02 }, 8.933E+22, 1.8213E+06, { 255,255,255 } },
         { "Europa", {  7.261610834953812E+11,  1.422150272943564E+11, -1.685660497491473E+10 }, {  6.257529127494619E+03,  2.373721511394373E+04,  5.010529147104954E+02 },  4.797E+22, 1.565E+06, { 255,255,255 } },
@@ -130,6 +130,30 @@ static GALAXY *create_disc_galaxy(double radius, int num)
 
 extern void write_png(const char *file_name, unsigned char *data, int width, int height);
 
+static void put_pixel(unsigned char *buffer, int px, int py, int width, int height, unsigned char *rgb)
+{
+    if (px >= 0 && px < width && py >= 0 && py < height)
+    {
+        buffer[3*(py*width + px)] = rgb[0];
+        buffer[3*(py*width + px)+1] = rgb[1];
+        buffer[3*(py*width + px)+2] = rgb[2];
+    }
+}
+
+static void draw_star(unsigned char *buffer, int px, int py, int width, int height, double zoom, STAR *star)
+{
+    double rad = star->radius * zoom * width;
+    
+    put_pixel(buffer, px, py, width, height, star->rgb);
+    if (rad >= 0.5)
+    {
+        put_pixel(buffer, px, py-1, width, height, star->rgb);
+        put_pixel(buffer, px-1, py, width, height, star->rgb);
+        put_pixel(buffer, px+1, py, width, height, star->rgb);
+        put_pixel(buffer, px, py+1, width, height, star->rgb);
+    }
+}
+
 void save_image(GALAXY *g, const char *filename, int save)
 {
     #define WIDTH 512
@@ -145,27 +169,22 @@ void save_image(GALAXY *g, const char *filename, int save)
     
     for (i = 0; i < 3*width*height; i++)
     {
-        if (buffer[i] > 10)
+        if (buffer[i] > 100)
             buffer[i]--;
     }
     
-    double zoom = 20.0;
+    double zoom = 20.0/g->radius;
     double focus_x = 0.0;
     double focus_y = 0.0;
     
     for (i = 0; i < g->num; i++)
     {
         STAR *s = g->stars[i];
-        if (s->size == 0.0)
+        if (s->radius == 0.0)
             continue;
-        int px = ((s->pos[0] - focus_x)/g->radius) * zoom  *width/2 + width/2;
-        int py = ((s->pos[1] - focus_y)/g->radius) * zoom * height/2 + height/2;
-        if (px >= 0 && px < width && py >= 0 && py < height)
-        {
-            buffer[3*(py*height + px)] = s->rgb[0];
-            buffer[3*(py*height + px)+1] = s->rgb[1];
-            buffer[3*(py*height + px)+2] = s->rgb[2];
-        }
+        int px = (s->pos[0] - focus_x) * zoom * width/2 + width/2;
+        int py = (s->pos[1] - focus_y) * zoom * height/2 + height/2;
+        draw_star(buffer, px, py, width, height, zoom, s);
     }
     
     if (save)
@@ -182,22 +201,22 @@ int main(int argc, char *argv[])
     
     #define SECONDS_PER_YEAR 365.242199*24*3600
     
-    int num_frames = 1000;
-    int calcs_per_frame = 10;
+    int num_frames = 2500;
+    int calcs_per_frame = 100;
     double time_per_frame = SECONDS_PER_YEAR/1000;
-    int frames_per_image = 1;
+    int frames_per_image = 10;
     
     f = fopen("stars.dat", "wb");
     for (i = 0; i < num_frames; i++)
     {
         char fn[1000];
         int j;
-        
         for (j = 0; j < calcs_per_frame; j++)
             calculate_frame(g, time_per_frame/calcs_per_frame);
-        
         update_galaxy(g);
+        //printf("%f %f %f\n", g->barycentre[0]/time_per_frame, g->barycentre[1]/time_per_frame, g->barycentre[2]/time_per_frame);
         recentre_galaxy(g);
+        //fprintf(stderr, "Barycentre %f,%f,%f; mass %f; movement %f\n", g->barycentre[0], g->barycentre[1], g->barycentre[2], g->mass, (bcx - g->barycentre[1])/100/10000);
         
         dump_galaxy(g, f);
         snprintf(fn, sizeof(fn), "img/out%05d.png", i / frames_per_image);

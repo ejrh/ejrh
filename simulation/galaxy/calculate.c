@@ -30,6 +30,7 @@ void calculate__apply_forces(GALAXY *g, VECTOR *forces, double timestep)
     
     for (i = 0; i < g->num; i++)
     {
+        double ts = timestep;
         STAR *s = g->stars[i];
         if (s->mass == 0.0)
             continue;
@@ -37,6 +38,8 @@ void calculate__apply_forces(GALAXY *g, VECTOR *forces, double timestep)
         vector_add_scaled(s->vel, forces[i], timestep / s->mass);
         vector_add_scaled(s->pos, s->vel, timestep);
     }
+    
+    g->time += timestep;
 }
 
 static void naive_calculator__calculate(CALCULATOR *calculator, GALAXY *galaxy, VECTOR *forces)
