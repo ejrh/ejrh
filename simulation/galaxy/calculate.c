@@ -24,6 +24,29 @@ void calculate__calculate_force(STAR *s1, STAR *s2, double g, VECTOR force)
     vector_add(force, df);
 }
 
+/**
+ * Return the inverse of the Lorentz factor, used in relativistic calculations.
+ * Since (in the case of the solar system) relativistic precession is basically
+ * imperceptible, we use a small "fudge factor" to exaggerate it a bit.
+ *
+ * @param g Galaxy object containing gravity well; the observer is assumed
+ *          to be outside the range of the gravity well.
+ * @param s Object under the influence of the gravity well, to calculate
+ *          factor for.
+ * @param Inverse of the Lorentz factor.
+ */
+static double get_relativistic_factor(GALAXY *g, STAR *s)
+{
+    #define GRAVITY 6.67428E-11
+    #define SPEED_OF_LIGHT 299792458.0
+    #define FUDGE_FACTOR 10
+    
+    double d2 = get_distance2(s, g->gravity_well);
+    double schwarzschild_radius = 2 * GRAVITY * g->gravity_well->mass / (SPEED_OF_LIGHT * SPEED_OF_LIGHT);
+    double k = sqrt(1.0 - FUDGE_FACTOR * schwarzschild_radius / sqrt(d2));
+    return k;
+}
+
 void calculate__apply_forces(GALAXY *g, VECTOR *forces, double timestep)
 {
     int i;
@@ -35,7 +58,13 @@ void calculate__apply_forces(GALAXY *g, VECTOR *forces, double timestep)
         if (s->mass == 0.0)
             continue;
         
-        vector_add_scaled(s->vel, forces[i], timestep / s->mass);
+        if (g->gravity_well && g->gravity_well != s)
+        {
+            double k = get_relativistic_factor(g, s);
+            ts = ts*k;
+        }
+        
+        vector_add_scaled(s->vel, forces[i], ts / s->mass);
         vector_add_scaled(s->pos, s->vel, timestep);
     }
     
