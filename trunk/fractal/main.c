@@ -594,13 +594,19 @@ int main(int argc, char *argv[])
             SDL_Rect dest = { 0, 0 };
             float seconds;
             int pixels_per_second;
+            int mouse_x, mouse_y;
+            double mouse_px, mouse_py;
 
             if (pixels_done < options->window.width * options->window.height)
                 end_time = clock();
             seconds = (end_time - start_time) / (float) CLOCKS_PER_SEC;
             pixels_per_second = (seconds > 0) ? pixels_done/seconds : 0;
+            
+            SDL_GetMouseState(&mouse_x, &mouse_y);
+            pixel_to_point(&options->window, mouse_x*2, mouse_y*2, &mouse_px, &mouse_py);
 
-            snprintf(buffer, sizeof(buffer), "mode=%s, mfunc=%s, depth=%d, done=%d/%d, PPS=%d, cx,cy=%f,%f, scale=%f, status=%s     ",
+            snprintf(buffer, sizeof(buffer), "(%f,%f) mode=%s, mfunc=%s, depth=%d, done=%d/%d, PPS=%d, cx,cy=%f,%f, scale=%f, status=%s     ",
+                    mouse_px, mouse_py,
                     draw_modes[options->current_draw_mode].name, mfunc_modes[options->current_mfunc_mode].name, options->window.depth,
                     pixels_done, options->window.width * options->window.height, pixels_per_second, options->window.centrex, options->window.centrey,
                     options->window.scale * options->screen_height, status);
