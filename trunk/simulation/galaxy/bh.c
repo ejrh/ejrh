@@ -17,13 +17,13 @@ typedef struct NODE
 } NODE;
 
 
-typedef struct CALC_DATA
+struct CALC_DATA
 {
     double side_limit;
     double threshold;
     NODE *tree;
     NODE *next_node, *max_node;
-} BH_CALCULATOR;
+};
 
 
 static NODE *get_new_node(CALC_DATA *data)
@@ -70,6 +70,12 @@ static NODE *get_child(CALC_DATA *data, NODE *tree, VECTOR pos)
 /** Add the positon and mass of s2 into s1. */
 static void merge_star(STAR *s1, STAR *s2)
 {
+    if (s1->mass == 0)
+    {
+        *s1 = *s2;
+        return;
+    }
+    
     double total_mass = s1->mass + s2->mass;
     int i;
     
@@ -84,7 +90,6 @@ static void insert_star(CALC_DATA *data, NODE *tree, STAR *s)
 {
     if (tree->star == NULL)
     {
-        //fprintf(stderr, "Insert %p into empty %p.\n", s, tree);
         /* Simple case: node is empty, just make it point to this star. */
         tree->star = s;
     }
@@ -93,7 +98,7 @@ static void insert_star(CALC_DATA *data, NODE *tree, STAR *s)
         /* Special optimisation: if the tree is small enough, just bin all stars into it. */
         if (tree->star != &tree->star_data)
         {
-            merge_star(&tree->star_data, tree->star);
+            tree->star_data = *tree->star;
             tree->star = &tree->star_data;
         }
         merge_star(&tree->star_data, s);
@@ -103,7 +108,6 @@ static void insert_star(CALC_DATA *data, NODE *tree, STAR *s)
         /* Next simple case: node internal, so insert the star into the correct child
            and update the node's star to account for this star. */
         NODE *child = get_child(data, tree, s->pos);
-        //fprintf(stderr, "Insert %p into child %p of %p.\n", s, child, tree);
         insert_star(data, child, s);
         merge_star(tree->star, s);
     }
@@ -112,7 +116,6 @@ static void insert_star(CALC_DATA *data, NODE *tree, STAR *s)
         /* Complicated case: node is external and already occupied.
            Turn it into an internal node, and insert both this star and the node's initial star into one of the children. */
         STAR *star2 = tree->star;
-        //fprintf(stderr, "Insert %p alongside %p in %p.\n", s, star2, tree);
         tree->star = &tree->star_data;
         insert_star(data, tree, s);
         insert_star(data, tree, star2);
@@ -130,8 +133,6 @@ NODE *build_tree(CALC_DATA *data, GALAXY *galaxy)
     
     memset(data->tree, 0, sizeof(NODE) * max_nodes);
     
-    //fprintf(stderr, "%d %p %p %p\n", max_nodes, tree, next_node, max_node);
-    
     data->tree->side = galaxy->radius * 2.0;
     
     for (i = 0; i < galaxy->num; i++)
@@ -141,10 +142,8 @@ NODE *build_tree(CALC_DATA *data, GALAXY *galaxy)
             continue;
         
         insert_star(data, data->tree, s);
-        //fprintf(stderr, "Star %d inserted\n", i);
     }
     
-    //fprintf(stderr, "Tree built\n");
     return data->tree;
 }
 
@@ -152,16 +151,12 @@ NODE *build_tree(CALC_DATA *data, GALAXY *galaxy)
 static void get_force_from_tree(CALCULATOR *calc, NODE *tree, STAR *s, VECTOR force)
 {
     CALC_DATA *data = calc->data;
-    double d2;
     
     if (tree == NULL || tree->star == NULL)
         return;
     
-    d2 = get_distance2(s, tree->star);
-    
-    if (tree->star != &tree->star_data || tree->side / sqrt(d2) < data->threshold)
+    if (tree->star != &tree->star_data || tree->side / sqrt(get_distance2(s, tree->star)) < data->threshold)
     {
-        //fprintf(stderr, "Calculating force between %p and %p\n", tree->star, s);
         calculate.calculate_force(s, tree->star, calc->gravity, force);
     }
     else
@@ -186,7 +181,6 @@ static void calculate_forces(CALCULATOR *calc, NODE *tree, GALAXY *galaxy, VECTO
         if (s->mass == 0.0)
             continue;
         
-        //fprintf(stderr, "Calculating force for star %p\n", s);
         get_force_from_tree(calc, tree, s, forces[i]);
     }
 }

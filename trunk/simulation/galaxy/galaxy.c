@@ -55,6 +55,7 @@ GALAXY *create_galaxy()
     galaxy->num = 0;
     galaxy->max = 10;
     galaxy->stars = malloc(sizeof(STAR *) * galaxy->max);
+    galaxy->time = 0.0;
     return galaxy;
 }
 
@@ -91,7 +92,7 @@ STAR *create_star()
     star->vel[1] = 0.0;
     star->vel[2] = 0.0;
     star->mass = 0.0;
-    star->size = 1.0;
+    star->radius = 1.0;
     return star;
 }
 
