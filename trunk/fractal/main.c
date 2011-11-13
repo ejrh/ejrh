@@ -197,7 +197,8 @@ void restart(OPTIONS *options, int new_mode)
     if (options->fractal != NULL)
         fractal_modes[options->current_fractal_mode].destroy(options->fractal);
     
-    options->window.depth = get_depth(options->current_depth_mode);
+    if (options->current_depth_mode != 0)
+        options->window.depth = get_depth(options->current_depth_mode);
     
     if (fractal_modes[options->current_fractal_mode].type == JULIA)
         options->fractal = julia_create(&options->window, options->mandelbrot_x, options->mandelbrot_y);
@@ -317,6 +318,7 @@ static void parse_args(int argc, char *argv[], OPTIONS *options)
                 exit(1);
             }
             options->window.depth = atoi(argv[i]);
+            options->current_depth_mode = 0;
         }
         else if (strcmp(argv[i], "--loops") == 0)
         {
