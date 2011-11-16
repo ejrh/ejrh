@@ -70,14 +70,16 @@ static NODE *get_child(CALC_DATA *data, NODE *tree, VECTOR pos)
 /** Add the positon and mass of s2 into s1. */
 static void merge_star(STAR *s1, STAR *s2)
 {
+    double total_mass;
+    int i;
+
     if (s1->mass == 0)
     {
         *s1 = *s2;
         return;
     }
     
-    double total_mass = s1->mass + s2->mass;
-    int i;
+    total_mass = s1->mass + s2->mass;
     
     for (i = 0; i < 3; i++)
         s1->pos[i] = (s1->pos[i]*s1->mass + s2->pos[i]*s2->mass) / total_mass;
@@ -129,10 +131,11 @@ static void insert_star(CALC_DATA *data, NODE *tree, STAR *s)
 NODE *build_tree(CALC_DATA *data, GALAXY *galaxy)
 {
     int max_nodes = galaxy->num * 100;
+    int i;
+
     data->tree = malloc(sizeof(NODE) * max_nodes);
     data->next_node = data->tree + 1;
     data->max_node = data->tree + max_nodes;    
-    int i;
     
     memset(data->tree, 0, sizeof(NODE) * max_nodes);
     
@@ -178,7 +181,7 @@ static void calculate_forces(CALCULATOR *calc, NODE *tree, GALAXY *galaxy, VECTO
 {
     int i;
     
-    #pragma openmp parallel for
+    #pragma omp parallel for
     for (i = 0; i < galaxy->num; i++)
     {
         STAR *s = galaxy->stars[i];

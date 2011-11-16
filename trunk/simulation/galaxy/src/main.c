@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#define _USE_MATH_DEFINES
 #include <math.h>
 
 #include <SDL.h>
@@ -109,17 +110,21 @@ void ReadPixel(SDL_Surface *screen, Uint8 *R, Uint8 *G, Uint8 *B, int x, int y)
 
 void calculate_frame(GALAXY *g, double timestep)
 {
-    VECTOR forces[g->num];
+    VECTOR *forces;
     //CALCULATOR *c = calculate.naive_calculator();
     CALCULATOR *c = bh_calculator();
     c->gravity = GRAVITY;
+
+    forces = malloc(sizeof(VECTOR) * g->num);
     
-    memset(forces, 0, sizeof(forces));
+    memset(forces, 0, sizeof(VECTOR) * g->num);
     
     c->calculate(c, g, forces);
     
     calculate.apply_forces(g, forces, timestep);
     c->destroy(c);
+
+    free(forces);
 }
 
 /*
@@ -208,8 +213,9 @@ static GALAXY *create_disc_galaxy(double radius, int num)
     int i;
     
     GALAXY *g = create_galaxy();
+    STAR *s0, *s1;
 
-    STAR *s0 = create_star();
+    s0 = create_star();
     s0->mass = 1E24;
     s0->pos[0] = 0.0;
     s0->pos[1] = 0.0;
@@ -226,10 +232,10 @@ static GALAXY *create_disc_galaxy(double radius, int num)
     for (i = 0; i < num; i++)
     {
         STAR *s = create_star();
-        s->mass = 1; //1E24;
         double a = rand_float(0.0, 2.0*M_PI);
         double t = rand_float(0.0, 1.0);
         double r = 1 - t*t;
+        s->mass = 1; //1E24;
         s->pos[0] = radius * r * cos(a);
         s->pos[1] = radius * r * sin(a);
         s->pos[2] = 0.0;
@@ -243,7 +249,7 @@ static GALAXY *create_disc_galaxy(double radius, int num)
         add_star(g, s);
     }
     
-    STAR *s1 = create_star();
+    s1 = create_star();
     s1->mass = 1E24;
     s1->pos[0] = 0;
     s1->pos[1] = -1.2*radius;
@@ -294,6 +300,10 @@ int draw_image(GALAXY *g, double scale)
     int height = HEIGHT;
     int num_drawn;
     
+    double zoom = scale/g->radius;
+    double focus_x = 0.0;
+    double focus_y = 0.0;
+    
     /*for (i = 0; i < 3*width*height; i++)
     {
         if (buffer[i] > 100)
@@ -313,19 +323,18 @@ int draw_image(GALAXY *g, double scale)
         }
     }
     
-    double zoom = scale/g->radius;
-    double focus_x = 0.0;
-    double focus_y = 0.0;
-    
     num_drawn = 0;
     
     for (i = 0; i < g->num; i++)
     {
         STAR *s = g->stars[i];
+        int px, py;
+
         if (s->radius == 0.0)
             continue;
-        int px = (s->pos[0] - focus_x) * zoom * width/2 + width/2;
-        int py = (s->pos[1] - focus_y) * zoom * height/2 + height/2;
+
+        px = (s->pos[0] - focus_x) * zoom * width/2 + width/2;
+        py = (s->pos[1] - focus_y) * zoom * height/2 + height/2;
         draw_star( /* buffer */ NULL, px, py, width, height, zoom, s);
         
         if (px >= 0 && px < width && py >= 0 && py < height)
@@ -347,6 +356,14 @@ int main(int argc, char *argv[])
     FILE *f;
     TTF_Font *font;
     SDL_Event evt;
+
+    GALAXY *g;
+    int num_frames;
+    int calcs_per_frame;
+    double time_per_frame;
+    int frames_per_image;
+    
+    double scale;
     
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
         error();
@@ -366,16 +383,16 @@ int main(int argc, char *argv[])
     }
         
     //GALAXY *g = create_solar_system_2();
-    GALAXY *g = create_disc_galaxy(2.5E11, 5000);
+    g = create_disc_galaxy(2.5E11, 5000);
     
     #define SECONDS_PER_YEAR 365.242199*24*3600
     
-    int num_frames = 250000;
-    int calcs_per_frame = 1;
-    double time_per_frame = SECONDS_PER_YEAR*2;
-    int frames_per_image = 1;
+    num_frames = 250000;
+    calcs_per_frame = 1;
+    time_per_frame = SECONDS_PER_YEAR*2;
+    frames_per_image = 1;
     
-    double scale = 0.1;
+    scale = 0.1;
     
     update_galaxy(g);
     recentre_galaxy(g);

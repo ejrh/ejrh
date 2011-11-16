@@ -10,13 +10,17 @@
 
 void calculate__calculate_force(STAR *s1, STAR *s2, double g, VECTOR force)
 {
+    double d2;
+    double f;
+    double k;
+    VECTOR df;
+
     if (s1 == s2)
         return;
     
-    double d2 = get_distance2(s1, s2);
-    double f = s1->mass * s2->mass * g / (d2 + PADDING);
-    double k = f/sqrt(d2);
-    VECTOR df;
+    d2 = get_distance2(s1, s2);
+    f = s1->mass * s2->mass * g / (d2 + PADDING);
+    k = f/sqrt(d2);
     
     df[0] = (s2->pos[0] - s1->pos[0])*k;
     df[1] = (s2->pos[1] - s1->pos[1])*k;
