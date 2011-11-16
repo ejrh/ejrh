@@ -86,6 +86,9 @@ static void merge_star(STAR *s1, STAR *s2)
 }
 
 
+#define MASS_THRESHOLD 10
+
+
 static void insert_star(CALC_DATA *data, NODE *tree, STAR *s)
 {
     if (tree->star == NULL)
@@ -138,7 +141,7 @@ NODE *build_tree(CALC_DATA *data, GALAXY *galaxy)
     for (i = 0; i < galaxy->num; i++)
     {
         STAR *s = galaxy->stars[i];
-        if (s->mass == 0.0)
+        if (s->mass < MASS_THRESHOLD)
             continue;
         
         insert_star(data, data->tree, s);
@@ -175,6 +178,7 @@ static void calculate_forces(CALCULATOR *calc, NODE *tree, GALAXY *galaxy, VECTO
 {
     int i;
     
+    #pragma openmp parallel for
     for (i = 0; i < galaxy->num; i++)
     {
         STAR *s = galaxy->stars[i];

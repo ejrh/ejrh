@@ -6,7 +6,7 @@
 #include "calculate.h"
 
 
-#define PADDING 10.0
+#define PADDING 1E9
 
 void calculate__calculate_force(STAR *s1, STAR *s2, double g, VECTOR force)
 {

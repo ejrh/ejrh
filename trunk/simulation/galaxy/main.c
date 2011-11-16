@@ -3,12 +3,109 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include <SDL.h>
+#include <SDL_ttf.h>
+
 #include "galaxy.h"
 #include "calculate.h"
 #include "bh.h"
 
 
+#ifdef WIN32
+    #define snprintf sprintf_s
+    #define FONT_PATH "c:/windows/fonts/arial.ttf"
+#else
+    #define FONT_PATH "/usr/share/fonts/truetype/msttcorefonts/arial.ttf"
+#endif
+
+#define WIDTH 512
+#define HEIGHT 512
+
+static SDL_Surface *display = NULL;
+
 #define GRAVITY 6.67428E-11
+
+void DrawPixel(SDL_Surface *screen, Uint8 R, Uint8 G, Uint8 B, int x, int y)
+{
+    Uint32 color = SDL_MapRGB(screen->format, R, G, B);
+
+    switch (screen->format->BytesPerPixel) {
+        case 1: { /* Assuming 8-bpp */
+            Uint8 *bufp;
+
+            bufp = (Uint8 *)screen->pixels + y*screen->pitch + x;
+            *bufp = color;
+        }
+        break;
+
+        case 2: { /* Probably 15-bpp or 16-bpp */
+            Uint16 *bufp;
+
+            bufp = (Uint16 *)screen->pixels + y*screen->pitch/2 + x;
+            *bufp = color;
+        }
+        break;
+
+        case 3: { /* Slow 24-bpp mode, usually not used */
+            Uint8 *bufp;
+
+            bufp = (Uint8 *)screen->pixels + y*screen->pitch + x;
+            *(bufp+screen->format->Rshift/8) = R;
+            *(bufp+screen->format->Gshift/8) = G;
+            *(bufp+screen->format->Bshift/8) = B;
+        }
+        break;
+
+        case 4: { /* Probably 32-bpp */
+            Uint32 *bufp;
+
+            bufp = (Uint32 *)screen->pixels + y*screen->pitch/4 + x;
+            *bufp = color;
+        }
+        break;
+    }
+}
+
+void ReadPixel(SDL_Surface *screen, Uint8 *R, Uint8 *G, Uint8 *B, int x, int y)
+{
+    Uint8 A;
+
+    switch (screen->format->BytesPerPixel) {
+        case 1: { /* Assuming 8-bpp */
+            Uint8 *bufp;
+
+            bufp = (Uint8 *)screen->pixels + y*screen->pitch + x;
+            SDL_GetRGBA(*bufp, screen->format, R, G, B, &A);
+        }
+        break;
+
+        case 2: { /* Probably 15-bpp or 16-bpp */
+            Uint16 *bufp;
+
+            bufp = (Uint16 *)screen->pixels + y*screen->pitch/2 + x;
+            SDL_GetRGBA(*bufp, screen->format, R, G, B, &A);
+        }
+        break;
+
+        case 3: { /* Slow 24-bpp mode, usually not used */
+            Uint8 *bufp;
+
+            bufp = (Uint8 *)screen->pixels + y*screen->pitch + x;
+            *R = *(bufp+screen->format->Rshift/8);
+            *G = *(bufp+screen->format->Gshift/8);
+            *B = *(bufp+screen->format->Bshift/8);
+        }
+        break;
+
+        case 4: { /* Probably 32-bpp */
+            Uint32 *bufp;
+
+            bufp = (Uint32 *)screen->pixels + y*screen->pitch/4 + x;
+            SDL_GetRGBA(*bufp, screen->format, R, G, B, &A);
+        }
+        break;
+    }
+}
 
 void calculate_frame(GALAXY *g, double timestep)
 {
@@ -111,36 +208,68 @@ static GALAXY *create_disc_galaxy(double radius, int num)
     int i;
     
     GALAXY *g = create_galaxy();
+
+    STAR *s0 = create_star();
+    s0->mass = 1E24;
+    s0->pos[0] = 0.0;
+    s0->pos[1] = 0.0;
+    s0->pos[2] = 0.0;
+    s0->vel[0] = 0.0;
+    s0->vel[1] = 0.0;
+    s0->vel[2] = 0.0;
+    s0->radius = 2.5E9;
+    s0->rgb[0] = 255;
+    s0->rgb[1] = 127;
+    s0->rgb[2] = 0;
+    add_star(g, s0);
     
     for (i = 0; i < num; i++)
     {
         STAR *s = create_star();
-        s->mass = 1E32;
+        s->mass = 1; //1E24;
         double a = rand_float(0.0, 2.0*M_PI);
-        double r = rand_float(0.0, radius);
-        s->pos[0] = r * cos(a);
-        s->pos[1] = r * sin(a);
+        double t = rand_float(0.0, 1.0);
+        double r = 1 - t*t;
+        s->pos[0] = radius * r * cos(a);
+        s->pos[1] = radius * r * sin(a);
         s->pos[2] = 0.0;
-        s->vel[0] = cos(a+M_PI/2.0);
-        s->vel[1] = sin(a+M_PI/2.0);
+        s->vel[0] = cos(a + M_PI/2)*sqrt((GRAVITY*s0->mass)/(radius*r));
+        s->vel[1] = sin(a + M_PI/2)*sqrt((GRAVITY*s0->mass)/(radius*r));
         s->vel[2] = 0.0;
+        s->radius = rand_float(1.5E8, 2.5E8);
+        s->rgb[0] = 255*r;
+        s->rgb[1] = 255*(1-r);
+        s->rgb[2] = rand() % 256;
         add_star(g, s);
     }
+    
+    STAR *s1 = create_star();
+    s1->mass = 1E24;
+    s1->pos[0] = 0;
+    s1->pos[1] = -1.2*radius;
+    s1->pos[2] = 0.0;
+    s1->vel[0] = sqrt((GRAVITY*s0->mass)/(1.2*radius));
+    s1->vel[1] = 0.0;
+    s1->vel[2] = 0.0;
+    s1->radius = 2.5E9;
+    s1->rgb[0] = 0;
+    s1->rgb[1] = 127;
+    s1->rgb[2] = 255;
+    add_star(g, s1);
     
     g->radius = radius;
     
     return g;
 }
 
-extern void write_png(const char *file_name, unsigned char *data, int width, int height);
-
 static void put_pixel(unsigned char *buffer, int px, int py, int width, int height, unsigned char *rgb)
 {
     if (px >= 0 && px < width && py >= 0 && py < height)
     {
-        buffer[3*(py*width + px)] = rgb[0];
+        /*buffer[3*(py*width + px)] = rgb[0];
         buffer[3*(py*width + px)+1] = rgb[1];
-        buffer[3*(py*width + px)+2] = rgb[2];
+        buffer[3*(py*width + px)+2] = rgb[2];*/
+        DrawPixel(display, rgb[0], rgb[1], rgb[2], px, py);
     }
 }
 
@@ -158,28 +287,37 @@ static void draw_star(unsigned char *buffer, int px, int py, int width, int heig
     }
 }
 
-void save_image(GALAXY *g, const char *filename, int save)
+int draw_image(GALAXY *g, double scale)
 {
-    #define WIDTH 512
-    #define HEIGHT 512
-    
     int i;
     int width = WIDTH;
     int height = HEIGHT;
-    static unsigned char buffer[3*WIDTH*HEIGHT];
-    //buffer = malloc(width*height);
+    int num_drawn;
     
-    //memset(buffer, 0, width*height);
-    
-    for (i = 0; i < 3*width*height; i++)
+    /*for (i = 0; i < 3*width*height; i++)
     {
         if (buffer[i] > 100)
             buffer[i]--;
+    }*/
+    for (i = 0; i < height; i++)
+    {
+        int j;
+        for (j = 0; j < width; j++)
+        {
+            unsigned char rgb[3];
+            ReadPixel(display, &rgb[0], &rgb[1], &rgb[2], j, i);
+            rgb[0] *= 0.9;
+            rgb[1] *= 0.9;
+            rgb[2] *= 0.9;
+            DrawPixel(display, rgb[0], rgb[1], rgb[2], j, i);
+        }
     }
     
-    double zoom = 20.0/g->radius;
+    double zoom = scale/g->radius;
     double focus_x = 0.0;
     double focus_y = 0.0;
+    
+    num_drawn = 0;
     
     for (i = 0; i < g->num; i++)
     {
@@ -188,33 +326,83 @@ void save_image(GALAXY *g, const char *filename, int save)
             continue;
         int px = (s->pos[0] - focus_x) * zoom * width/2 + width/2;
         int py = (s->pos[1] - focus_y) * zoom * height/2 + height/2;
-        draw_star(buffer, px, py, width, height, zoom, s);
+        draw_star( /* buffer */ NULL, px, py, width, height, zoom, s);
+        
+        if (px >= 0 && px < width && py >= 0 && py < height)
+            num_drawn++;
     }
     
-    if (save)
-        write_png(filename, buffer, width, height);
-    //free(buffer);
+    return num_drawn;
+}
+
+void error(void)
+{
+    fprintf(stderr, "SDL error: %s\n", SDL_GetError());
+        exit(1);
 }
 
 int main(int argc, char *argv[])
 {
     int i;
     FILE *f;
-    GALAXY *g = create_solar_system_2();
-    //GALAXY *g = create_disc_galaxy(2.5E11, 1000);
+    TTF_Font *font;
+    SDL_Event evt;
+    
+    if(SDL_Init(SDL_INIT_VIDEO) < 0) {
+        error();
+    }
+
+    if (TTF_Init() < 0) {
+        error();
+    }
+
+    font = TTF_OpenFont(FONT_PATH, 16);
+    if (!font)
+        error();
+
+    display = SDL_SetVideoMode(WIDTH, HEIGHT, 32, SDL_HWSURFACE | SDL_DOUBLEBUF);
+    if(display == NULL) {
+        error();
+    }
+        
+    //GALAXY *g = create_solar_system_2();
+    GALAXY *g = create_disc_galaxy(2.5E11, 5000);
     
     #define SECONDS_PER_YEAR 365.242199*24*3600
     
-    int num_frames = 2500;
-    int calcs_per_frame = 100;
-    double time_per_frame = SECONDS_PER_YEAR/1000;
-    int frames_per_image = 10;
+    int num_frames = 250000;
+    int calcs_per_frame = 1;
+    double time_per_frame = SECONDS_PER_YEAR*2;
+    int frames_per_image = 1;
     
-    f = fopen("stars.dat", "wb");
+    double scale = 0.1;
+    
+    update_galaxy(g);
+    recentre_galaxy(g);
+    draw_image(g, scale);
+    SDL_UpdateRect(display, 0, 0, WIDTH, HEIGHT);
+    
+    //f = fopen("stars.dat", "wb");
     for (i = 0; i < num_frames; i++)
     {
-        char fn[1000];
         int j;
+        int num_drawn;
+        
+        while (SDL_PollEvent(&evt))
+        {
+            if (evt.type == SDL_QUIT)
+                i = num_frames;
+            else if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_ESCAPE)
+                i = num_frames;
+            else if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_z)
+            {
+                if (evt.key.keysym.mod & KMOD_SHIFT)
+                    scale *= M_SQRT1_2;
+                else
+                    scale /= M_SQRT1_2;
+            }
+        }
+        
         for (j = 0; j < calcs_per_frame; j++)
             calculate_frame(g, time_per_frame/calcs_per_frame);
         update_galaxy(g);
@@ -222,13 +410,41 @@ int main(int argc, char *argv[])
         recentre_galaxy(g);
         //fprintf(stderr, "Barycentre %f,%f,%f; mass %f; movement %f\n", g->barycentre[0], g->barycentre[1], g->barycentre[2], g->mass, (bcx - g->barycentre[1])/100/10000);
         
-        dump_galaxy(g, f);
-        snprintf(fn, sizeof(fn), "img/out%05d.png", i / frames_per_image);
-        save_image(g, fn, i % frames_per_image == 0);
+        //dump_galaxy(g, f);
+        num_drawn = draw_image(g, scale);
+        
+        {
+            SDL_Color white = { 255, 255, 255 };
+            SDL_Color black = { 0, 0, 0 };
+            char buffer[1000];
+            SDL_Surface *txt;
+            SDL_Rect dest = { 0, 0 };
+
+            snprintf(buffer, sizeof(buffer), "frame %d, time %f, visible %d    ", i, g->time, num_drawn);
+            txt = TTF_RenderText(font, buffer, white, black);
+            dest.w = txt->w;
+            dest.h = txt->h;
+
+            SDL_BlitSurface(txt, NULL, display, &dest);
+            SDL_FreeSurface(txt);
+        }
+        
+        SDL_UpdateRect(display, 0, 0, WIDTH, HEIGHT);
+        
+        if (i % frames_per_image == 0)
+        {
+            char fn[1000];
+            snprintf(fn, sizeof(fn), "img/out%05d.bmp", i / frames_per_image);
+            //SDL_SaveBMP(display, fn);
+        }
     }
-    fclose(f);
+    //fclose(f);
     
     destroy_galaxy(g);
     
+    TTF_Quit();
+        
+    SDL_Quit();
+
     return 0;
 }
