@@ -1,4 +1,4 @@
-CFLAGS = -g -Wall $(OPT)
+CFLAGS = -g -Wall $(OPT) -I /usr/include/SDL 
 
 OBJ=$(patsubst %.c, %.o, $(wildcard *.c))
 HEADERS=galaxy.h
@@ -6,7 +6,7 @@ HEADERS=galaxy.h
 all: galaxy
 
 galaxy: $(OBJ)
-	$(CC) -o $@ $(OBJ) $(CFLAGS) -lm -lpng
+	$(CC) -o $@ $(OBJ) $(CFLAGS) -lm -lpng -lSDL -lSDL_ttf 
 
 %.o: %.c $(HEADERS)
 	$(CC) -c $< $(CFLAGS)
