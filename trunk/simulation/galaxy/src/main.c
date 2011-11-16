@@ -234,7 +234,7 @@ static GALAXY *create_disc_galaxy(double radius, int num)
         STAR *s = create_star();
         double a = rand_float(0.0, 2.0*M_PI);
         double t = rand_float(0.0, 1.0);
-        double r = 1 - t*t;
+        double r = sqrt(t);
         s->mass = 1; //1E24;
         s->pos[0] = radius * r * cos(a);
         s->pos[1] = radius * r * sin(a);
