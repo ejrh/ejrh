@@ -1,5 +1,6 @@
 #include "fractal.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #define _USE_MATH_DEFINES
@@ -28,6 +29,7 @@ typedef struct DRAWING
     
     int frame;
     int frame_offset;
+    int frame_step;
 } DRAWING;
 
 
@@ -39,6 +41,55 @@ typedef struct BATON
     int *x_slots;
     int *y_slots;
 } BATON;
+
+
+/**
+ * Find the greatest integer n where 2^n <= x.
+ *
+ * I'm sure there are cheaper ways of doing it (just find the position of
+ * the highest bit) !  But it's not called very often.
+ *
+ * @param x A positive integer.
+ * @return n Such that 2^n <= x.
+ */
+static int powerof2(int x)
+{
+    int n = 0;
+    while (x > 1)
+    {
+        n += 1;
+        x >>= 1;
+    }
+    return n;
+}
+
+
+/**
+ * Permuate the elements of the set from [0, n) into a low-discrepancy sequence.
+ * Algorithm courtesy of Per, see http://stackoverflow.com/questions/8176743/recursive-interlacing-permutation.
+ *
+ * @param n Size of the sequence.
+ * @param i Index to get.
+ * @return The element at position i.
+ */
+static int rev(int n, int i)
+{
+    int j = 0;
+    while (n >= 2)
+    {
+        int m = i & 1;
+        if (m != 0)
+            j += (n + 1) >> 1;
+        n = (n + 1 - m) >> 1;
+        i >>= 1;
+    }
+    return j;
+}
+
+static void next_frame(DRAWING *drawing)
+{
+    drawing->frame = rev(drawing->num_frames, drawing->frame_step++);
+}
 
 
 DRAWING *parallel_create(WINDOW *window, FRACTAL *fractal, GET_POINT get_point, MFUNC *mfunc)
@@ -58,7 +109,8 @@ DRAWING *parallel_create(WINDOW *window, FRACTAL *fractal, GET_POINT get_point, 
     drawing->pixels_per_job = (int) ceil((double) drawing->num_pixels / drawing->num_frames / drawing->num_jobs);
     
     drawing->frame_offset = 0;   //TODO use last frame?
-    drawing->frame = 0;
+    drawing->frame_step = 0;
+    next_frame(drawing);
     
     return drawing;
 }
@@ -122,7 +174,8 @@ void parallel_update(DRAWING *drawing)
     
     memset(thread_done, 0, sizeof(thread_done));
 
-    if (drawing->frame >= drawing->num_frames)
+    //fprintf(stderr, "num_frames %d, frame_step %d, frame %d\n", drawing->num_frames, drawing->frame_step, drawing->frame);
+    if (drawing->frame_step > drawing->num_frames)
         return;
 
     #pragma omp parallel for
@@ -140,7 +193,7 @@ void parallel_update(DRAWING *drawing)
     for (j = 0; j < drawing->num_jobs; j++)
         pixels_done += thread_done[j];
 
-    drawing->frame++;
+    next_frame(drawing);
 }
 
 
