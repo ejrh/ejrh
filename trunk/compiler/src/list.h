@@ -3,7 +3,7 @@
 
 /**
 * @file list.h
- * A list class, holding a sequence of items (which are opaque pointers).  The
+ * A list object, holding a sequence of items (which are opaque pointers).  The
  * list will automatically expand as needed when items are added to it.
  */
 
