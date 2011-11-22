@@ -16,6 +16,7 @@ typedef struct WINDOW
     int width;
     int height;
     int depth;
+    int smooth;
 } WINDOW;
 
 /** Translate from a point in the Mandelbrot set to a pixel, using the given window.
@@ -63,7 +64,7 @@ extern void julia_destroy(FRACTAL *fractal);
 
 
 extern float do_pixel(WINDOW *window, int x, int y);
-extern void set_pixel(WINDOW *window, int x, int y, float k);
+extern void set_pixel(WINDOW *window, int x, int y, int k, float fx, float fy);
 
 extern int pixels_done;
 

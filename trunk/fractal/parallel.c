@@ -152,22 +152,18 @@ int parallel_next_pixel(int slot, int *max_iterations, double *zx, double *zy, d
 void parallel_output_pixel(int slot, int remaining, double fx, double fy, BATON *baton)
 {
     DRAWING *drawing = baton->drawing;
-    float val = 0.0;
     int k;
     
     if (remaining == 0)
     {
-        val = 0.0;
         k = 0;
     }
     else
     {
         k = drawing->window->depth - remaining;
-        float z = sqrt(fx*fx + fy*fy);
-        val = (float) k - log(log(z))/log(2.0);
     }
     
-    set_pixel(drawing->window, baton->x_slots[slot], baton->y_slots[slot], val);
+    set_pixel(drawing->window, baton->x_slots[slot], baton->y_slots[slot], k, fx, fy);
 }
 
 

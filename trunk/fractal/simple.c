@@ -78,22 +78,18 @@ static int simple_next_pixel(int slot, int *max_iterations, double *zx, double *
 static void simple_output_pixel(int slot, int remaining, double fx, double fy, BATON *baton)
 {
     DRAWING *drawing = (DRAWING *) baton;
-    float val;
     int k;
     
     if (remaining == 0)
     {
-        val = 0.0;
         k = 0;
     }
     else
     {
         k = drawing->window->depth - remaining;
-        float z = sqrt(fx*fx + fy*fy);
-        val = (float) k - log(log(z))/log(2.0);
     }
     
-    set_pixel(drawing->window, drawing->x_slots[slot], drawing->y_slots[slot], val);
+    set_pixel(drawing->window, drawing->x_slots[slot], drawing->y_slots[slot], k, fx, fy);
     drawing->quota -= ((k == 0) ? drawing->window->depth : k) + PIXEL_COST;
 }
 

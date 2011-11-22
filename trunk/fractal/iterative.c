@@ -118,19 +118,15 @@ restart:
 static void iterative_output_pixel(int slot, int remaining, double fx, double fy, BATON *baton)
 {
     DRAWING *drawing = (DRAWING *) baton;
-    float val;
     int k;
     
     if (remaining == 0)
     {
-        val = 0.0;
         k = 0;
     }
     else
     {
         k = drawing->iteration_depth - remaining;
-        float z = sqrt(fx*fx + fy*fy);
-        val = (float) k - log(log(z))/log(2.0);
     }
     
     if (k == 0 && drawing->iteration_depth < drawing->window->depth)
@@ -141,7 +137,7 @@ static void iterative_output_pixel(int slot, int remaining, double fx, double fy
     else
     {
         drawing->done[drawing->y_slots[slot]*drawing->width + drawing->x_slots[slot]] = 1;
-        set_pixel(drawing->window, drawing->x_slots[slot], drawing->y_slots[slot], val);
+        set_pixel(drawing->window, drawing->x_slots[slot], drawing->y_slots[slot], k, fx, fy);
     }
     
     drawing->quota -= ((k == 0) ? drawing->iteration_depth : k) + PIXEL_COST;

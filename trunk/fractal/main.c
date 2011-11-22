@@ -103,12 +103,23 @@ char *status = "?";
 static clock_t start_time, end_time;
 
 
-void set_pixel(WINDOW *window, int x, int y, float val)
+void set_pixel(WINDOW *window, int x, int y, int k, float fx, float fy)
 {
     SDL_Color col;
     int x1 = x/2;
     int y1 = y/2;
     double f, g;
+    float val;
+
+    if (window->smooth)
+    {
+        float z = sqrt(fx*fx + fy*fy);
+        val = (float) k - log(log(z))/log(2.0);
+    }
+    else
+    {
+        val = k;
+    }
 
     buffer[y*window->width + x] = val;
     val = buffer[y*window->width + x] + buffer[(y^1)*window->width + x] + buffer[y*window->width + (x^1)] + buffer[(y^1)*window->width + (x^1)];
@@ -126,32 +137,6 @@ void set_pixel(WINDOW *window, int x, int y, float val)
     pixels_done++;
 }
 
-float do_pixel(WINDOW *window, int x, int y)
-{
-    double zx = 0.0, zy = 0.0;
-    double px, py;
-    double fx, fy;
-    int k;
-    float val;
-
-    pixel_to_point(window, x, y, &px, &py);
-
-    k = mfunc_direct(zx, zy, px, py, window->depth, &fx, &fy);
-
-    if (k == 0)
-    {
-        val = 0.0;
-    }
-    else
-    {
-        float z = sqrt(fx*fx + fy*fy);
-        val = (float) k - log(log(z))/log(2.0);
-    }
-
-    set_pixel(window, x, y, val);
-
-    return val;
-}
 
 void fade_screen(OPTIONS *options)
 {
@@ -459,6 +444,7 @@ int main(int argc, char *argv[])
     options->window.width = options->screen_width * 2;
     options->window.height = options->screen_height * 2;
     options->window.scale = 1.5 / options->screen_height;
+    options->window.smooth = 1;
     
     buffer = malloc(sizeof(float) * options->window.width * options->window.height);
     memset(buffer, 0, sizeof(float) * options->window.width * options->window.height);
@@ -494,6 +480,7 @@ int main(int argc, char *argv[])
             {
                 int new_mode;
                 fade_screen(options);
+                finish(options);
                 if (evt.key.keysym.mod & KMOD_SHIFT)
                 {
                     new_mode = options->current_draw_mode - 1;
@@ -549,6 +536,13 @@ int main(int argc, char *argv[])
                     options->window.centrey = options->mandelbrot_y;
                     options->window.scale = options->mandelbrot_scale;
                 }
+                restart(options, options->current_draw_mode);
+            }
+            else if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_5)
+            {
+                fade_screen(options);
+                finish(options);
+                options->window.smooth = !options->window.smooth;
                 restart(options, options->current_draw_mode);
             }
             else if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_c)

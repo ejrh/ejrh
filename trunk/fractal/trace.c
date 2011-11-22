@@ -232,8 +232,7 @@ restart:
 
     if (drawing->state == FILLING)
     {
-        float val = 0;
-        set_pixel(drawing->window, c.x, c.y, val);
+        set_pixel(drawing->window, c.x, c.y, 0, 0.0, 0.0);
         drawing->done[c.y*drawing->width + c.x] = 1;
         drawing->quota -= PIXEL_COST;
 
@@ -280,22 +279,18 @@ static void trace_output_pixel(int slot, int remaining, double fx, double fy, BA
 {
     DRAWING *drawing = (DRAWING *) baton;    
     int i;
-    float val;
     int k;
 
     if (remaining == 0)
     {
-        val = 0.0;
         k = 0;
     }
     else
     {
         k = drawing->window->depth - remaining;
-        float z = sqrt(fx*fx + fy*fy);
-        val = (float) k - log(log(z))/log(2.0);
     }
     
-    set_pixel(drawing->window, drawing->x_slots[slot], drawing->y_slots[slot], val);
+    set_pixel(drawing->window, drawing->x_slots[slot], drawing->y_slots[slot], k, fx, fy);
     drawing->done[drawing->y_slots[slot]*drawing->width + drawing->x_slots[slot]] = 1;
     drawing->quota -= ((k == 0) ? drawing->window->depth : k) + PIXEL_COST;
 
@@ -311,7 +306,7 @@ static void trace_output_pixel(int slot, int remaining, double fx, double fy, BA
             continue;
         c2.x = new_x;
         c2.y = new_y;
-        priority = (k == 0) ? LOWEST_PRIORITY : (int) (HIGHEST_PRIORITY*log(val)/log(drawing->window->depth) + ((new_x ^ new_y ^ drawing->quota) & 0x15));
+        priority = (k == 0) ? LOWEST_PRIORITY : (int) (HIGHEST_PRIORITY*log(k)/log(drawing->window->depth) + ((new_x ^ new_y ^ drawing->quota) & 0x15));
         if (priority < HIGHEST_PRIORITY)
             priority = HIGHEST_PRIORITY;
         else if (priority > LOWEST_PRIORITY)
