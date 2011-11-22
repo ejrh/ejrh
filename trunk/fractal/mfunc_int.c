@@ -77,7 +77,7 @@ int mfunc_direct_int(double zx, double zy, double cx, double cy, int max_iterati
 }
 
 
-void mfunc_loop_int(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton)
+void mfunc_loop_int(ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton)
 {
     allocate_slots(1, baton);
 
@@ -87,12 +87,15 @@ void mfunc_loop_int(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_SOU
         double px, py;
         int k;
         double fx, fy;
+        int max_iterations;
 
-        if (!next_pixel(0, &zx, &zy, &px, &py, baton))
+        if (!next_pixel(0, &max_iterations, &zx, &zy, &px, &py, baton))
             break;
 
         k = mfunc_direct_int(zx, zy, px, py, max_iterations, &fx, &fy);
 
-        output_pixel(0, k, fx, fy, baton);
+        if (k == 0)
+            k = max_iterations;
+        output_pixel(0, max_iterations - k, fx, fy, baton);
     }
 }

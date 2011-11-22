@@ -60,12 +60,12 @@ int mfunc_direct_float(double zx, double zy, double cx, double cy, int max_itera
 }
 
 
-void mfunc_loop(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton)
+void mfunc_loop(ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton)
 {
-    int i = max_iterations;
+    int i = 0;
     double cx, cy;
     double zr, zi;
-    double zr2, zi2;
+    double zr2 = 2.0, zi2 = 2.0;
     int done = 0;
     
     allocate_slots(1, baton);
@@ -75,7 +75,7 @@ void mfunc_loop(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE 
         double t;
         
         /* Check if it's time to output a pixel and/or start a new one. */
-        if (i >= max_iterations || zr2 + zi2 > 2.0*2.0)
+        if (i <= 0 || zr2 + zi2 > 2.0*2.0)
         {
             if (done != 0)
             {
@@ -85,12 +85,10 @@ void mfunc_loop(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE 
                     output_pixel(0, i, zr, zi, baton);
             }
             
-            if (!next_pixel(0, &zr, &zi, &cx, &cy, baton))
+            if (!next_pixel(0, &i, &zr, &zi, &cx, &cy, baton))
                 break;
             
             done += 1;
-            
-            i = 0;
         }
     
         /* Do some work on the current pixel. */
@@ -100,12 +98,12 @@ void mfunc_loop(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE 
         zr = zr2 - zi2 + cx;
         zi = t + t + cy;
 
-        i++;
+        i--;
     }
 }
 
 
-void mfunc_loop_float(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton)
+void mfunc_loop_float(ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton)
 {
     allocate_slots(1, baton);
 
@@ -115,12 +113,15 @@ void mfunc_loop_float(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_S
         double px, py;
         int k;
         double fx, fy;
+        int max_iterations;
 
-        if (!next_pixel(0, &zx, &zy, &px, &py, baton))
+        if (!next_pixel(0, &max_iterations, &zx, &zy, &px, &py, baton))
             break;
 
         k = mfunc_direct_float(zx, zy, px, py, max_iterations, &fx, &fy);
 
-        output_pixel(0, k, fx, fy, baton);
+        if (k == 0)
+            k = max_iterations;
+        output_pixel(0, max_iterations - k, fx, fy, baton);
     }
 }

@@ -15,30 +15,30 @@ typedef union {
 } int_union;    
 
 
-static int check_slot(int slot, int *i, int_union *test, int *in_progress,
+static int check_slot(int slot, int *iterations, int_union *test, int *in_progress,
         __m128d *cx, __m128d *cy, __m128d *zr, __m128d *zi,
-        int max_iterations, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton)
+        PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton)
 {
     union {
         __m128d m128d;
         double doubles[2];
     } pixel_x, pixel_y, zero_x, zero_y;
 
-    if (*i < max_iterations && !test->ints[slot])
+    if (*iterations > 0 && !test->ints[slot])
         return 1;
     
     if (*in_progress & (1 << slot))
     {
         pixel_x.m128d = *zr;
         pixel_y.m128d = *zi;
-        output_pixel(slot, test->ints[slot] ? *i : 0, pixel_x.doubles[slot], pixel_y.doubles[slot], baton);
+        output_pixel(slot, *iterations, pixel_x.doubles[slot], pixel_y.doubles[slot], baton);
     }
     else
     {
         *in_progress |= (1 << slot);
     }
 
-    if (next_pixel(slot, &zero_x.doubles[slot], &zero_y.doubles[slot], &pixel_x.doubles[slot], &pixel_y.doubles[slot], baton))
+    if (next_pixel(slot, iterations, &zero_x.doubles[slot], &zero_y.doubles[slot], &pixel_x.doubles[slot], &pixel_y.doubles[slot], baton))
     {
         if (slot == 0)
         {
@@ -59,7 +59,6 @@ static int check_slot(int slot, int *i, int_union *test, int *in_progress,
     {
         *in_progress &= ~(1 << slot);
     }
-    *i = 0;
 
     if (*in_progress == 0)
         return 0;
@@ -68,10 +67,10 @@ static int check_slot(int slot, int *i, int_union *test, int *in_progress,
 }
 
 
-void mfunc_simd(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton)
+void mfunc_simd(ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton)
 {
-    int i0 = max_iterations;
-    int i1 = max_iterations;
+    int i0 = 0;
+    int i1 = 0;
     int in_progress = 0;
 
     __m128d cx;
@@ -99,16 +98,17 @@ void mfunc_simd(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE 
     while (1)
     {
         /* Check if it's time to output the first pixel and/or start a new one. */
-        if (ENABLE_SLOT0 && !check_slot(0, &i0, &test, &in_progress, &cx, &cy, &zr, &zi, max_iterations, next_pixel, output_pixel, baton))
+        if (ENABLE_SLOT0 && !check_slot(0, &i0, &test, &in_progress, &cx, &cy, &zr, &zi, next_pixel, output_pixel, baton))
             break;
 
         /* Check if it's time to output the second pixel and/or start a new one. */
-        if (ENABLE_SLOT1 && !check_slot(1, &i1, &test, &in_progress, &cx, &cy, &zr, &zi, max_iterations, next_pixel, output_pixel, baton))
+        if (ENABLE_SLOT1 && !check_slot(1, &i1, &test, &in_progress, &cx, &cy, &zr, &zi, next_pixel, output_pixel, baton))
             break;
 
+#define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 
-        countdown_from = max_iterations - MAX(i0, i1);
+        countdown_from = MIN(i0, i1);
         if (countdown_from <= 0)
             countdown_from = 1;
         countdown = countdown_from;
@@ -134,7 +134,7 @@ void mfunc_simd(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE 
                 break;
         }
         test.m128d = t2;
-        i0 += (countdown_from - countdown);
-        i1 += (countdown_from - countdown);
+        i0 -= (countdown_from - countdown);
+        i1 -= (countdown_from - countdown);
     }
 }

@@ -49,7 +49,7 @@ static void simple_allocate_slots(int num_slots, BATON *baton)
 }
 
 
-static int simple_next_pixel(int slot, double *zx, double *zy, double *cx, double *cy, BATON *baton)
+static int simple_next_pixel(int slot, int *max_iterations, double *zx, double *zy, double *cx, double *cy, BATON *baton)
 {
     DRAWING *drawing = (DRAWING *) baton;
     
@@ -68,22 +68,27 @@ static int simple_next_pixel(int slot, double *zx, double *zy, double *cx, doubl
         drawing->j = 0;
         drawing->i++;
     }
+    
+    *max_iterations = drawing->window->depth;
 
     return 1;
 }
 
 
-static void simple_output_pixel(int slot, int k, double fx, double fy, BATON *baton)
+static void simple_output_pixel(int slot, int remaining, double fx, double fy, BATON *baton)
 {
     DRAWING *drawing = (DRAWING *) baton;
-    float val = 0.0;
+    float val;
+    int k;
     
-    if (k == 0)
+    if (remaining == 0)
     {
         val = 0.0;
+        k = 0;
     }
     else
     {
+        k = drawing->window->depth - remaining;
         float z = sqrt(fx*fx + fy*fy);
         val = (float) k - log(log(z))/log(2.0);
     }
@@ -97,7 +102,7 @@ void simple_update(DRAWING *drawing)
 {
     drawing->quota = QUOTA_SIZE;
 
-    drawing->mfunc(drawing->window->depth, simple_allocate_slots, simple_next_pixel, simple_output_pixel, (BATON *) drawing);
+    drawing->mfunc(simple_allocate_slots, simple_next_pixel, simple_output_pixel, (BATON *) drawing);
     
     status = "RENDERING";
 }

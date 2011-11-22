@@ -71,7 +71,7 @@ static void iterative_allocate_slots(int num_slots, BATON *baton)
 }
 
 
-static int iterative_next_pixel(int slot, double *zx, double *zy, double *cx, double *cy, BATON *baton)
+static int iterative_next_pixel(int slot, int *max_iterations, double *zx, double *zy, double *cx, double *cy, BATON *baton)
 {
     DRAWING *drawing = (DRAWING *) baton;
     
@@ -109,21 +109,26 @@ restart:
         goto restart;
     }
     
+    *max_iterations = drawing->iteration_depth;
+    
     return 1;
 }
 
 
-static void iterative_output_pixel(int slot, int k, double fx, double fy, BATON *baton)
+static void iterative_output_pixel(int slot, int remaining, double fx, double fy, BATON *baton)
 {
     DRAWING *drawing = (DRAWING *) baton;
-    float val = 0.0;
+    float val;
+    int k;
     
-    if (k == 0)
+    if (remaining == 0)
     {
         val = 0.0;
+        k = 0;
     }
     else
     {
+        k = drawing->iteration_depth - remaining;
         float z = sqrt(fx*fx + fy*fy);
         val = (float) k - log(log(z))/log(2.0);
     }
@@ -147,7 +152,7 @@ void iterative_update(DRAWING *drawing)
 {
     drawing->quota = QUOTA_SIZE;
 
-    drawing->mfunc(drawing->iteration_depth, iterative_allocate_slots, iterative_next_pixel, iterative_output_pixel, (BATON *) drawing);
+    drawing->mfunc(iterative_allocate_slots, iterative_next_pixel, iterative_output_pixel, (BATON *) drawing);
     if (drawing->iteration_depth >= drawing->window->depth)
         status = "DONE";
     else

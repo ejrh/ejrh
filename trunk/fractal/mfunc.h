@@ -33,12 +33,13 @@ typedef void ALLOCATE_SLOTS(int num_slots, BATON *baton);
  * its own information about pixels it gives to mfunc_loop.
  *
  * @param slot Slot of mfunc_loop that the pixel will be used for.
+ * @param max_iterations Maximum number of iterations to process this pixel for.
  * @param cx,cy Pointers to where the function should write the pixel coordinates.
  * @param baton A drawing-mode specific baton that the callback can 
  * use to store slot information.
  * @return Non-zero if a pixel was provided, or zero if there are no more pixels to work on.
  */
-typedef int PIXEL_SOURCE(int slot, double *zx, double *zy, double *cx, double *cy, BATON *mfunc_baton);
+typedef int PIXEL_SOURCE(int slot, int *max_iterations, double *zx, double *zy, double *cx, double *cy, BATON *mfunc_baton);
 
 /** Pixel output is a callback that the Mandelbrot loop function uses to
  * indicate a pixel computation has finished.  This callback is called for
@@ -48,12 +49,12 @@ typedef int PIXEL_SOURCE(int slot, double *zx, double *zy, double *cx, double *c
  * next_pixel callback).
  *
  * @param slot Slot of pixel (same as slot used for original next_pixel call).
- * @param value Number of iterations before point was outside the set, or 0 if it remained in it after max_iterations.
+ * @param value Number of iterations remaining; 0 if poiint remains within the boundary.
  * @param cx,cy Last calculated position.
  * @param baton A drawing-mode specific baton that the callback can 
  * use to store slot information.
  */
-typedef void PIXEL_OUTPUT(int slot, int value, double fx, double fy, BATON *mfunc_baton);
+typedef void PIXEL_OUTPUT(int slot, int remaining, double fx, double fy, BATON *mfunc_baton);
 
 /** Direct Mandelbrot function, that works on one pixel at a time.
  * @param cx,cy Coordinates of pixel to work on.
@@ -84,22 +85,22 @@ extern int mfunc_direct_int(double zx, double zy, double cx, double cy, int max_
  *     subsequently call output_pixel for slot X.
  *   - mfunc_loop will terminate when next_pixel has returned 0 for all slots.
  *
- * @param max_iterations Maximum number of iterations, as in mloop.
+ * @param allocate_slots Callback for allocate_slots.
  * @param next_pixel Callback for next_pixel.
  * @param output_pixel Callback for output_pixel.
  * @param baton A drawing-mode specific baton that will be passed to callbacks.
  */
-typedef void MFUNC(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton);
+typedef void MFUNC(ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton);
 
 /** Single slot version of Mandelbrot loop function.
  * 
  * See MFUNC for further documentation.
  */
-extern void mfunc_loop(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton);
+extern void mfunc_loop(ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton);
 
-extern void mfunc_loop_float(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton);
+extern void mfunc_loop_float(ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton);
 
-extern void mfunc_loop_int(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton);
+extern void mfunc_loop_int(ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton);
 
 
 /** SIMD version of Mandelbrot loop function.  Will use up to 2 slots.  Note
@@ -109,13 +110,13 @@ extern void mfunc_loop_int(int max_iterations, ALLOCATE_SLOTS allocate_slots, PI
  * 
  * See MFUNC for further documentation.
  */
-extern void mfunc_simd(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton);
+extern void mfunc_simd(ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton);
 
 /**
  * SIMD version using 32-bit floating point.  Will use up to 4 slots.
  *
  * See MFUNC for further documentation.
  */
-extern void mfunc_simd_float(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton);
+extern void mfunc_simd_float(ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton);
 
 #endif

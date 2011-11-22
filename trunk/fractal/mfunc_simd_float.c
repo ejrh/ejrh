@@ -22,30 +22,30 @@ typedef union {
 } float_union;
 
 
-static int check_slot(int slot, int *i, int_union *test, int *in_progress,
+static int check_slot(int slot, int *iterations, int_union *test, int *in_progress,
         float_union *cx, float_union *cy, float_union *zr, float_union *zi,
-        int max_iterations, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton)
+        PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton)
 {
     float_union pixel_x, pixel_y;
     
     double zx, zy;
     double px, py;
 
-    if (*i < max_iterations && !test->ints[slot])
+    if (*iterations > 0 && !test->ints[slot])
         return 1;
     
     if (*in_progress & (1 << slot))
     {
         pixel_x.m128 = zr->m128;
         pixel_y.m128 = zi->m128;
-        output_pixel(slot, test->ints[slot] ? *i : 0, pixel_x.floats[slot], pixel_y.floats[slot], baton);
+        output_pixel(slot, *iterations, pixel_x.floats[slot], pixel_y.floats[slot], baton);
     }
     else
     {
         *in_progress |= (1 << slot);
     }
 
-    if (next_pixel(slot, &zx, &zy, &px, &py, baton))
+    if (next_pixel(slot, iterations,&zx, &zy, &px, &py, baton))
     {
         cx->floats[slot] = px;
         cy->floats[slot] = py;
@@ -56,7 +56,6 @@ static int check_slot(int slot, int *i, int_union *test, int *in_progress,
     {
         *in_progress &= ~(1 << slot);
     }
-    *i = 0;
 
     if (*in_progress == 0)
     {
@@ -67,12 +66,12 @@ static int check_slot(int slot, int *i, int_union *test, int *in_progress,
 }
 
 
-void mfunc_simd_float(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton)
+void mfunc_simd_float(ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton)
 {
-    int i0 = max_iterations;
-    int i1 = max_iterations;
-    int i2 = max_iterations;
-    int i3 = max_iterations;
+    int i0 = 0;
+    int i1 = 0;
+    int i2 = 0;
+    int i3 = 0;
     int in_progress = 0;
 
     __m128 cx;
@@ -100,24 +99,25 @@ void mfunc_simd_float(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_S
     while (1)
     {
         /* Check if it's time to output the first pixel and/or start a new one. */
-        if (ENABLE_SLOT0 && !check_slot(0, &i0, &test, &in_progress, (float_union*) &cx, (float_union*) &cy, (float_union*) &zr, (float_union*) &zi, max_iterations, next_pixel, output_pixel, baton))
+        if (ENABLE_SLOT0 && !check_slot(0, &i0, &test, &in_progress, (float_union*) &cx, (float_union*) &cy, (float_union*) &zr, (float_union*) &zi, next_pixel, output_pixel, baton))
             break;
 
         /* Check if it's time to output the second pixel and/or start a new one. */
-        if (ENABLE_SLOT1 && !check_slot(1, &i1, &test, &in_progress, (float_union*) &cx, (float_union*) &cy, (float_union*) &zr, (float_union*) &zi, max_iterations, next_pixel, output_pixel, baton))
+        if (ENABLE_SLOT1 && !check_slot(1, &i1, &test, &in_progress, (float_union*) &cx, (float_union*) &cy, (float_union*) &zr, (float_union*) &zi, next_pixel, output_pixel, baton))
             break;
 
         /* Check if it's time to output the third pixel and/or start a new one. */
-        if (ENABLE_SLOT2 && !check_slot(2, &i2, &test, &in_progress, (float_union*) &cx, (float_union*) &cy, (float_union*) &zr, (float_union*) &zi, max_iterations, next_pixel, output_pixel, baton))
+        if (ENABLE_SLOT2 && !check_slot(2, &i2, &test, &in_progress, (float_union*) &cx, (float_union*) &cy, (float_union*) &zr, (float_union*) &zi, next_pixel, output_pixel, baton))
             break;
 
         /* Check if it's time to output the fourth pixel and/or start a new one. */
-        if (ENABLE_SLOT3 && !check_slot(3, &i3, &test, &in_progress, (float_union*) &cx, (float_union*) &cy, (float_union*) &zr, (float_union*) &zi, max_iterations, next_pixel, output_pixel, baton))
+        if (ENABLE_SLOT3 && !check_slot(3, &i3, &test, &in_progress, (float_union*) &cx, (float_union*) &cy, (float_union*) &zr, (float_union*) &zi, next_pixel, output_pixel, baton))
             break;
 
+#define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 
-        countdown_from = max_iterations - MAX(MAX(i0, i1), MAX(i2, i3));
+        countdown_from = MIN(MIN(i0, i1), MIN(i2, i3));
         if (countdown_from <= 0)
             countdown_from = 1;
         countdown = countdown_from;
@@ -144,9 +144,9 @@ void mfunc_simd_float(int max_iterations, ALLOCATE_SLOTS allocate_slots, PIXEL_S
         }
 
         test.m128 = t2;
-        i0 += (countdown_from - countdown);
-        i1 += (countdown_from - countdown);
-        i2 += (countdown_from - countdown);
-        i3 += (countdown_from - countdown);
+        i0 -= (countdown_from - countdown);
+        i1 -= (countdown_from - countdown);
+        i2 -= (countdown_from - countdown);
+        i3 -= (countdown_from - countdown);
     }
 }
