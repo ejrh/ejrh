@@ -31,14 +31,20 @@ def fugue():
     
     #0 - 0
     right.append("""
-, , , , , , , , T< T< , D1 C1 D1 Bb1 D1 A1 D1
+, , , ,
+, , , ,
+, , T< T< , D1 C1 D1 Bb1 D1 A1 D1
 """)
     left.append("""
-T< T< , A1 G A1 F A1 E A1
+, , T< T< , A1 G A1 F A1 E A1
 D A1 C# A1 D A1 E A1 F A1 A A1 B A1 C# A1
 D A1 C# A1 D A1 E A1 T> F F# G C
 """)
-    pedal.append(""", , , , , , , , , ,""")
+    pedal.append("""
+, , , ,
+, , , ,
+, , , ,
+""")
 
     #1 - 3
     right.append("""
