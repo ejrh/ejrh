@@ -9,7 +9,7 @@ import socket
 WINDOWS = (platform.system() == 'Windows')
 
 
-class Item:
+class Item(object):
     def __init__(self):
         self.id = None
         self.name = None
@@ -30,7 +30,7 @@ class Item:
         return s
 
 
-class Importer:
+class Importer(object):
     def __init__(self):
         self.db = None
 
