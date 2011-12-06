@@ -77,7 +77,7 @@ class Board(object):
                     r[i] = ' '
     
     def find_moves(self, x, y):
-        if self.cells[y][x] != ' ':
+        if type(self.cells[y][x]) is int:
             return []
         dirs = [(0,1), (1, 0)]
         moves = []
@@ -100,11 +100,15 @@ class Board(object):
         #print 'searching from %d,%d on %d,%d' % (x,y, dx, dy)
         x += dx
         y += dy
+        if dy == 0:
+            ignores = ['-', '=']
+        else:
+            ignores = ['|', 'H']
         while self.in_range(x, y):
             if type(self.cells[y][x]) is int:
                 #print 'found target at %d,%d' % (x,y)
                 return x,y
-            if self.cells[y][x] != ' ':
+            if self.cells[y][x] != ' ' and self.cells[y][x] not in ignores:
                 #print 'was %s instead of blank at %d,%d' % (self.cells[y][x], x,y)
                 return None
             x += dx
@@ -184,6 +188,12 @@ class Window(object):
             pygame.draw.rect(self.display, (255,255,255), pygame.Rect(x1+w/2, y1, 2, h))
         elif self.board.cells[row][col] == '-':
             pygame.draw.rect(self.display, (255,255,255), pygame.Rect(x1, y1+h/2, w, 2))
+        elif self.board.cells[row][col] == 'H':
+            pygame.draw.rect(self.display, (255,255,255), pygame.Rect(x1+w/2-2, y1, 2, h))
+            pygame.draw.rect(self.display, (255,255,255), pygame.Rect(x1+w/2+2, y1, 2, h))
+        elif self.board.cells[row][col] == '=':
+            pygame.draw.rect(self.display, (255,255,255), pygame.Rect(x1, y1+h/2-2, w, 2))
+            pygame.draw.rect(self.display, (255,255,255), pygame.Rect(x1, y1+h/2+2, w, 2))
     
     def draw(self):
         for i in range(self.board.size):
@@ -232,17 +242,39 @@ class Control(object):
     def click(self, mx, my):
         if self.window.moves == []:
             return
+        
         x1,y1,x2,y2 = self.window.moves[0]
+        
+        tx, ty = self.window.current_tile
+        if self.board.cells[ty][tx] == ' ':
+            thickness = 1
+        elif self.board.cells[ty][tx] in ['|', '-']:
+            thickness = 2
+        else:
+            thickness = 0
+        
         if x1 == x2:
             dx, dy = 0, 1
             k = y2-y1
-            c = '|'
+            if thickness == 0:
+                c = ' '
+            elif thickness == 1:
+                c = '|'
+            else:
+                c = 'H'
         else:
             dx, dy = 1, 0
             k = x2-x1
-            c = '-'
+            if thickness == 0:
+                c = ' '
+            elif thickness == 1:
+                c = '-'
+            else:
+                c = '='
         for i in range(1,k):
             self.board.cells[y1+i*dy][x1+i*dx] = c
+        
+        return True
 
 
 def main(args=None):
@@ -259,6 +291,7 @@ def main(args=None):
     pygame.time.set_timer(pygame.USEREVENT+1, 500)
     
     while True:
+        redraw = False
         ev = pygame.event.wait()
         if ev.type == pygame.KEYDOWN:
             if ev.key == pygame.K_ESCAPE:
@@ -270,11 +303,14 @@ def main(args=None):
                 control = Control(board, window)
         if ev.type == pygame.MOUSEBUTTONDOWN:
             mx, my = ev.pos
-            control.click(mx, my)
+            redraw = control.click(mx, my)
         elif ev.type == pygame.USEREVENT+1:
             pass
         
         if control.update() or ev.type == pygame.USEREVENT+1:
+            redraw = True
+        
+        if redraw:
             window.update()
             #print >>sys.stderr, 'update'
 
