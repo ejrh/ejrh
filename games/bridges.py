@@ -216,6 +216,7 @@ class Control(object):
     def __init__(self, board, window):
         self.board = board
         self.window = window
+        self.toggle_dir = False
     
     def update(self):
         redraw = False
@@ -243,8 +244,6 @@ class Control(object):
         if self.window.moves == []:
             return
         
-        x1,y1,x2,y2 = self.window.moves[0]
-        
         tx, ty = self.window.current_tile
         if self.board.cells[ty][tx] == ' ':
             thickness = 1
@@ -253,10 +252,20 @@ class Control(object):
         else:
             thickness = 0
         
+        if self.toggle_dir:
+            x1,y1,x2,y2 = self.window.moves[-1]
+            if y1 == y2 and self.board.cells[ty][tx] in ['|', 'H']:
+                x1,y1,x2,y2 = self.window.moves[0]
+        else:
+            x1,y1,x2,y2 = self.window.moves[0]
+            if x1 == x2 and self.board.cells[ty][tx] in ['-', '=']:
+                x1,y1,x2,y2 = self.window.moves[1]
+        
         if x1 == x2:
             dx, dy = 0, 1
             k = y2-y1
             if thickness == 0:
+                self.toggle_dir = True
                 c = ' '
             elif thickness == 1:
                 c = '|'
@@ -266,6 +275,7 @@ class Control(object):
             dx, dy = 1, 0
             k = x2-x1
             if thickness == 0:
+                self.toggle_dir = False
                 c = ' '
             elif thickness == 1:
                 c = '-'
