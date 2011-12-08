@@ -1,0 +1,2 @@
+import game
+game.loop()
