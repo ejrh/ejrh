@@ -4,7 +4,7 @@ import pygame
 
 
 class Board(object):
-    def __init__(self, size=10, num_nodes=100):
+    def __init__(self, size=20, num_nodes=100):
         self.size = size
         self.cells = []
         for i in range(size):
@@ -119,6 +119,38 @@ class Board(object):
     
     def in_range(self, x, y):
         return x >= 0 and y >= 0 and x < self.size and y < self.size
+    
+    def draw_line(self, x1, y1, x2, y2, thickness):
+        if x1 == x2:
+            dx, dy = 0, 1
+            k = y2-y1
+            if thickness == 0:
+                inc = 2
+                c = ' '
+            elif thickness == 1:
+                inc = -1
+                c = '|'
+            else:
+                inc = -1
+                c = 'H'
+        else:
+            dx, dy = 1, 0
+            k = x2-x1
+            if thickness == 0:
+                inc = 2
+                c = ' '
+            elif thickness == 1:
+                inc = -1
+                c = '-'
+            else:
+                inc = -1
+                c = '='
+        
+        for i in range(1,k):
+            self.cells[y1+i*dy][x1+i*dx] = c
+        
+        self.cells[y1][x1] += inc
+        self.cells[y2][x2] += inc
 
     def __str__(self):
         rs = []
@@ -251,6 +283,7 @@ class Control(object):
             thickness = 2
         else:
             thickness = 0
+            self.toggle_dir = not self.toggle_dir
         
         if self.toggle_dir:
             x1,y1,x2,y2 = self.window.moves[-1]
@@ -261,28 +294,7 @@ class Control(object):
             if x1 == x2 and self.board.cells[ty][tx] in ['-', '=']:
                 x1,y1,x2,y2 = self.window.moves[1]
         
-        if x1 == x2:
-            dx, dy = 0, 1
-            k = y2-y1
-            if thickness == 0:
-                self.toggle_dir = True
-                c = ' '
-            elif thickness == 1:
-                c = '|'
-            else:
-                c = 'H'
-        else:
-            dx, dy = 1, 0
-            k = x2-x1
-            if thickness == 0:
-                self.toggle_dir = False
-                c = ' '
-            elif thickness == 1:
-                c = '-'
-            else:
-                c = '='
-        for i in range(1,k):
-            self.board.cells[y1+i*dy][x1+i*dx] = c
+        self.board.draw_line(x1,y1, x2,y2, thickness)
         
         return True
 
