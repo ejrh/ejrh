@@ -192,6 +192,8 @@ class Backup(object):
         
         if n is None:
             return False
+            
+        l.append(n)
     
         link_path = os.path.join(self.target, n)
         dest_path = os.path.join(self.target, new_path)
