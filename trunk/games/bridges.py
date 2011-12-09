@@ -212,7 +212,13 @@ class Window(object):
         pygame.draw.rect(self.display, fill_col, pygame.Rect(x1+1, y1+1, w-2, h-2))
 
         if type(self.board.cells[row][col]) is int:
-            text = self.font.render("%d" % self.board.cells[row][col], False, (255,255,255))
+            if self.board.cells[row][col]  > 0:
+                text_col = (0, 255, 0)
+            elif self.board.cells[row][col]  < 0:
+                text_col = (255, 0, 0)
+            else:
+                text_col = (255, 255, 255)
+            text = self.font.render("%d" % self.board.cells[row][col], False, text_col)
             tx = x1 + w/2 - text.get_width()/2
             ty = y1 + h/2 - text.get_height()/2
             self.display.blit(text, (tx, ty + 2))
