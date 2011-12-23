@@ -273,6 +273,11 @@ class Window(object):
         
         self.font = pygame.font.SysFont(None, 22)
         
+        # Make a troll face image.
+        face_col = (255,0,0)
+        text = self.font.render("D:", False, face_col)
+        self.troll_face = pygame.transform.rotate(text, 90)
+        
         self.current_tile = None
 
     def draw_tile(self, row, col):
@@ -302,13 +307,19 @@ class Window(object):
             else:
                 text_col = (255, 255, 255)
             
-            # Draw the node value as centered as we can get.
-            text = self.font.render("%d" % self.board.cells[row][col], False, text_col)
-            tx = x1 + w/2 - text.get_width()/2
-            ty = y1 + h/2 - text.get_height()/2
-            # + 2 is a fudge factor because digits aren't centered within
-            # the font's vertical space.
-            self.display.blit(text, (tx, ty + 2))
+            if self.board.cells[row][col]  < 0:
+                # If too many bridges at this node, a troll appears!
+                tx = x1 + w/2 - self.troll_face.get_width()/2
+                ty = y1 + h/2 - self.troll_face.get_height()/2
+                self.display.blit(self.troll_face, (tx + 2, ty))
+            else:            
+                # Draw the node value as centered as we can get.
+                text = self.font.render("%d" % self.board.cells[row][col], False, text_col)
+                tx = x1 + w/2 - text.get_width()/2
+                ty = y1 + h/2 - text.get_height()/2
+                # + 2 is a fudge factor because digits aren't centered within
+                # the font's vertical space.
+                self.display.blit(text, (tx, ty + 2))
         
         # Draw a bridge here if necessary.
         elif self.board.cells[row][col] == '|':
