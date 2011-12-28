@@ -1,50 +1,16 @@
 import sys
 import socket
-import irc_replies
+
+from debug import error, warn, notice
+from message import Message, encode, decode
+from replies import replies
+from controller import Controller
 
 DEFAULT_PORT = 6667
 
 BUFFER_SIZE = 1024
 
-MAX_MESSAGE = 510
-
 READ_TIMEOUT = 5
-
-def warn(s):
-    print >>sys.stderr, s
-
-def notice(s):
-    print >>sys.stderr, s
-
-class Message(object):
-    def __init__(self, prefix, command, params=None):
-        if params is None:
-            params = []
-        elif type(params) is str:
-            params = [params]
-        
-        self.prefix = prefix
-        self.command = command
-        self.params = params
-    
-    def __eq__(self, other):
-        if self.prefix != other.prefix:
-            return False
-        if self.command != other.command:
-            return False
-        if len(self.params) != len(other.params):
-            return False
-        for sp,op in zip(self.params, other.params):
-            if sp != op:
-                return False
-        return True
-    
-    def __ne__(self, other):
-        return not (self == other)
-        
-    def __str__(self):
-        return '[%s %s [%s]]' % (self.prefix, self.command, ' '.join(["'%s'" % p for p in self.params]))
-
 
 class Connection(object):
     def __init__(self, addr=None):
@@ -108,7 +74,8 @@ class Connection(object):
             warn('No CRLF in buffer')
             line = self.buffer
         
-        message = self.decode(line)
+        message = decode(line)
+        notice('In: %s' % message)
         return message
     
     def send(self, message):
@@ -116,95 +83,15 @@ class Connection(object):
             line = message
         else:
             notice('Out: %s' % message)
-            line = self.encode(message)
+            line = encode(message)
         while True:
             try:
                 self.socket.send(line)
                 break
             except socket.timeout:
                 pass
-    
-    def decode(self, line):
-        if len(line) == 0:
-            warn('Empty message')
-            return None
-        
-        # Read optional prefix
-        if line[0] == ':':
-            prefix,line = line[1:].split(' ', 1)
-        else:
-            prefix = None
-        line = line.lstrip()
-        
-        # Read command
-        if ' ' in line:
-            command,line = line.split(' ', 1)
-            line = line.lstrip()
-        else:
-            warn('No command')
-            command = None
-        
-        # Read params
-        params = []
-        while len(line) > 0 and line[0] != ':':
-            if ' ' in line:
-                param,line = line.split(' ', 1)
-            else:
-                param = line
-                line = ''
-            params.append(param)
-            line = line.lstrip()
-            
-        if len(line) > 0 and line[0] == ':':
-            params.append(line[1:])
-        else:
-            warn('No trailing parameter')
-        
-        # Translate command
-        try:
-            num = int(command)
-            name = irc_replies.replies[num]
-            command = name
-        except ValueError:
-            pass
-        except KeyError:
-            pass
-        
-        message = Message(prefix, command, params)
-        notice('In: %s' % message)
-        return message
-    
-    def encode(self, message):
-        line = ''
-        if message.prefix is not None:
-            line = ':%s ' % message.prefix
-        line += ' %s' % message.command
-        for i in range(len(message.params)):
-            if i == len(message.params) - 1:
-                line += ' :%s' % message.params[i]
-            else:
-                line += ' %s' % message.params[i]
-        if len(line) > MAX_MESSAGE:
-            warn('Message length is %d, truncating!' % len(line))
-            line = line[:MAX_MESSAGE]
-        
-        return line + '\r\n'
 
 STATE_START, STATE_OPEN, STATE_REGISTER, STATE_RUN, STATE_QUIT, STATE_CLOSE = range(6)
-
-class DumbController(object):
-    def __init__(self):
-        pass
-    
-    def see(self, channel, prefix, name):
-        print 'See %s in %s' % (name, channel)
-        
-    def hear(self, sender, recipient, text):
-        print '%s says to %s, "%s"' % (sender, recipient, text)
-        
-    def feel(self, sender, recipient, action):
-        print '%s does to %s, "%s"' % (sender, recipient, action)
-
 
 ACTION_PREFIX = '\x01ACTION '
 ACTION_SUFFIX = '\x01'
@@ -220,7 +107,7 @@ class Client(object):
         self.state = STATE_START
         self.channels = {}
         self.send_queue = []
-        self.controller = DumbController()
+        self.controller = Controller()
     
     def connect(self, addr):
         conn = Connection(addr)
@@ -273,7 +160,7 @@ class Client(object):
                     name = name[1:]
                 else:
                     prefix = ''
-                self.controller.see(channel, prefix, name)
+                self.controller.observe_person(channel, prefix, name)
         elif message.command == 'PRIVMSG':
             name = message.prefix
             if '!' in name:
@@ -282,20 +169,19 @@ class Client(object):
             text = message.params[-1]
             if text.startswith(ACTION_PREFIX) and text.endswith(ACTION_SUFFIX):
                 action = text[len(ACTION_PREFIX):len(text) - len(ACTION_SUFFIX)]
-                self.controller.feel(name, recipient, action)
+                self.controller.observe_action(name, recipient, action)
             else:
-                self.controller.hear(name, recipient, text)
+                self.controller.observe_message(name, recipient, text)
         elif message.command == 'JOIN':
             name = message.prefix
             if '!' in name:
                 name = name.split('!', 1)[0]
             channel = message.params[-1]
-            self.controller.see(channel, '', name)
+            self.controller.observe_person(channel, '', name)
         elif message.command == 'PING':
             server = message.params[-1]
             pong = Message(None, 'PONG', [self.servername, server])
-            self.send(pong)
-            
+            self.send(pong)            
     
     def speak(self, channel, text):
         privmsg = Message(None, 'PRIVMSG', [channel, text])
@@ -321,22 +207,3 @@ class Client(object):
     def run(self):
         while self.state != STATE_CLOSE:
             self.update()
-
-
-def test_decode(line, expected):
-    c = Connection()
-    message = c.decode(line)
-    if message != expected:
-        print >>sys.stderr, 'Test failed: "%s" decoded to %s instead of %s' % (line, message, expected)
-
-    
-def test():
-    test_decode(':prefix command :trailing param', Message('prefix', 'command', ['trailing param']))
-    test_decode('command :trailing param', Message(None, 'command', ['trailing param']))
-    test_decode('123 :trailing param', Message(None, '123', ['trailing param']))
-    test_decode('command param :trailing param', Message(None, 'command', ['param', 'trailing param']))
-    test_decode('command  param   :trailing param', Message(None, 'command', ['param', 'trailing param']))
-
-
-if __name__ == '__main__':
-    test()

@@ -1,6 +1,6 @@
 import threading
-import irc
 
+import irc
 import nl
 
 class CommandSyntaxError(Exception):
@@ -36,7 +36,7 @@ class Context(object):
         self.client.act(recipient, action)
 
 
-class Bot(irc.DumbController):
+class Bot(irc.Controller):
     def __init__(self, client):
         super(Bot, self).__init__()
         
@@ -56,15 +56,15 @@ class Bot(irc.DumbController):
         
         self.friends = ['edmund', 'edmund2', 'edmund3']
     
-    def see(self, channel, prefix, name):
-        super(Bot, self).see(channel, prefix, name)
+    def observe_person(self, channel, prefix, name):
+        super(Bot, self).observe_person(channel, prefix, name)
         
         if name in self.friends:
             #self.client.speak(channel, 'Hi %s' % name)
             pass
         
-    def hear(self, sender, recipient, text):
-        super(Bot, self).hear(sender, recipient, text)
+    def observe_message(self, sender, recipient, text):
+        super(Bot, self).observe_message(sender, recipient, text)
         
         context = Context(self, self.client)
         if recipient[0] == '#':
@@ -87,8 +87,8 @@ class Bot(irc.DumbController):
             self.last_message = ex.message
             print 'Message from handler: %s' % self.last_message
     
-    def feel(self, sender, recipient, action):
-        super(Bot, self).feel(sender, recipient, action)
+    def observe_action(self, sender, recipient, action):
+        super(Bot, self).observe_action(sender, recipient, action)
         
         context = Context(self, self.client)
         if recipient[0] == '#':
@@ -203,7 +203,7 @@ client.servername = 'smaug'
 client.realname = 'Skynet'
 client.controller = Bot(client)
 client.connect('irc.freenode.net:6667')
-client.join('##newzealand')
+client.join('##skynetbot')
 if THREADING:
     thread = threading.Thread(target=client.run)
     thread.start()
