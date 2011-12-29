@@ -30,7 +30,7 @@ class Item(object):
         s = 'item()'
         try:
             s = 'item(id=%s, name=%s, path=%s, size=%s, modified=%s, md5=%s, is_dir=%s, md5str=%s)' % (self.id, self.name, self.path, self.size, self.modified, self.md5, self.is_dir, self.md5str)
-        except:
+        except UnicodeDecodeError:
             s = 'item(undecodable)'
         return s
 
@@ -147,15 +147,16 @@ class Importer(object):
         
         try:
             l = os.listdir(actual_path)
-        except:
+        except OSError, inst:
+            exception_info("Couldn't list directory '%s'" % actual_path, inst)
             return []
         
         for name in l:
             item  = Item()
             try:
                 item.name = self.fs_decode(name)[0]
-            except:
-                warn("Couldn't decode %s!" % name)
+            except UnicodeDecodeError, inst:
+                exception_info("Couldn't decode '%s'!" % name, inst)
                 raise
             item.path = path + '/' + name
             item.actual_path = os.path.join(actual_path, name)
@@ -164,7 +165,8 @@ class Importer(object):
                 continue
             try:
                 statinfo = os.lstat(item.actual_path)
-            except:
+            except OSError, inst:
+                exception_info("Couldn't stat '%s'" % item.actual_path, inst)
                 continue
             if not stat.S_ISREG(statinfo[stat.ST_MODE]) and not stat.S_ISDIR(statinfo[stat.ST_MODE]):
                 continue
@@ -289,7 +291,8 @@ class Importer(object):
         # Load the image.
         try:
             im = Image.open(filename)
-        except:
+        except Exception, inst:
+            exception_info("Failed opening image '%s'" % filename, inst)
             return None
         
         im.load()
@@ -321,7 +324,8 @@ class Importer(object):
                 r,g,b = im.split()
                 sat = ImageMath.eval("1 - float(min(a, min(b, c))) / float(max(a, max(b, c)))", a=r, b=g, c=b)
                 lum = ImageMath.eval("convert(float(a + b + c)/3, 'L')", a=r, b=g, c=b)
-            except IOError:
+            except IOError, inst:
+                exception_info("Failed in processing image '%s'" % filename, inst)
                 return None
 
             ravg = ImageStat.Stat(r).mean[0]/255.0
@@ -370,8 +374,11 @@ class Importer(object):
             self.db.altered = True
             os.close(fp)
             os.unlink(tempname)
-        except Exception, e:
-            exception_info("Unable to create thumbnail for '%s'" % filename, e)
+        except TransactionRollbackError, inst:
+            exception_info("Unable to create thumbnail for '%s'" % filename, inst)
+            raise
+        except Exception, inst:
+            exception_info("Unable to create thumbnail for '%s'" % filename, inst)
             
         return image_id
 
@@ -399,8 +406,11 @@ class Importer(object):
         if self.image_re.search(item.name):
             try:
                 image_id = self.import_image(item.actual_path, item.md5)
-            except Exception, e:
-                exception_info('Image %s not processed' % item.actual_path, e)
+            except TransactionRollbackError, inst:
+                exception_info('Image %s not processed' % item.actual_path, inst)
+                raise
+            except Exception, inst:
+                exception_info('Image %s not processed' % item.actual_path, inst)
                 image_id = None
             if image_id != None:
                 params = {"id": item.id}
@@ -508,11 +518,12 @@ class Importer(object):
                 return self.import_dir(item)
             except TransactionRollbackError, inst:
                 if top_level or self.db.transaction_number != start_transaction_number:
-                    exception_info('Serialisation error in transaction; trying again', inst)
+                    exception_info("Serialisation error in '%s'; retrying" % item.path, inst)
                     self.db.rollback()
                     self.begin()
                     continue
                 else:
+                    exception_info("Serialisation error in '%s'; bubbling up" % item.path, inst)
                     raise
 
 
