@@ -2,7 +2,7 @@ import os, stat, time, tempfile
 import hashlib, codecs
 import string, re
 import psycopg2, psycopg2.extensions
-
+from psycopg2.extensions import TransactionRollbackError
 
 class Connection(object):
     def __init__(self, connstr = None):
