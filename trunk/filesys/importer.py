@@ -147,7 +147,7 @@ class Importer(object):
         
         try:
             l = os.listdir(actual_path)
-        except OSError, inst:
+        except (OSError, WindowsError), inst:
             exception_info("Couldn't list directory '%s'" % actual_path, inst)
             return []
         
@@ -165,7 +165,7 @@ class Importer(object):
                 continue
             try:
                 statinfo = os.lstat(item.actual_path)
-            except OSError, inst:
+            except (OSError, WindowsError), inst:
                 exception_info("Couldn't stat '%s'" % item.actual_path, inst)
                 continue
             if not stat.S_ISREG(statinfo[stat.ST_MODE]) and not stat.S_ISDIR(statinfo[stat.ST_MODE]):
@@ -291,7 +291,7 @@ class Importer(object):
         # Load the image.
         try:
             im = Image.open(filename)
-        except Exception, inst:
+        except IOError, inst:
             exception_info("Failed opening image '%s'" % filename, inst)
             return None
         
