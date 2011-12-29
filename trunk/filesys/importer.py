@@ -3,7 +3,7 @@ import os, stat, time, tempfile
 import hashlib, codecs
 import string, re
 import Image, ImageStat, ImageMath
-from database import Connection
+from database import Connection, TransactionRollbackError
 import platform
 import socket
 
@@ -95,12 +95,17 @@ class Importer(object):
                   VALUES ((SELECT COALESCE(MAX(rev_id),0)+1 FROM revision), NOW(), $1)""")
 
 
+    def begin(self):
+        self.db.begin()
+        self.db.altered = False
+        self.db.transaction_age = time.time()
+        self.db.transaction_number += 1
+
+
     def commit_if_necessary(self):
         if self.db.altered and time.time() > self.db.transaction_age + self.commit_interval:
             self.db.commit()
-            self.db.begin()
-            self.db.altered = False
-            self.db.transaction_age = time.time()
+            self.begin()
             return True
         return False
 
@@ -461,7 +466,7 @@ class Importer(object):
         
         for child_item in child_list:
             if child_item.is_dir:
-                child_item = self.import_dir(child_item)
+                child_item = self.try_import_dir(child_item)
             
             child_ids.append(child_item.id)
             md5_parts.append(child_item.md5line)
@@ -495,8 +500,22 @@ class Importer(object):
         
         item.md5line = "%s\t%s\n" % (item.name, item.md5)
         return item
-    
-    
+
+    def try_import_dir(self, item, top_level=False):
+        while True:
+            start_transaction_number = self.db.transaction_number
+            try:
+                return self.import_dir(item)
+            except TransactionRollbackError, inst:
+                if top_level or self.db.transaction_number != start_transaction_number:
+                    exception_info('Serialisation error in transaction; trying again', inst)
+                    self.db.rollback()
+                    self.begin()
+                    continue
+                else:
+                    raise
+
+
     def make_revision(self, root_item):
         params = {"root_id": root_item.id}
         self.db.execute("""EXECUTE insert_revision(%(root_id)s)""", params)
@@ -535,6 +554,7 @@ class Importer(object):
         self.db = Connection()
         self.db.connect()
         self.db.execute("SET client_encoding = UTF8");
+        self.db.transaction_number = 0
         self.read_config()
         self.prepare_queries()
 
@@ -547,11 +567,9 @@ class Importer(object):
         
         self.hostname = socket.gethostname()
 
-        self.db.begin()
-        self.db.altered = False
-        self.db.transaction_age = time.time()
+        self.begin()
+        root_item = self.try_import_dir(root_item, top_level=True)
         
-        root_item = self.import_dir(root_item)
         if path == '':
             self.make_revision(root_item)
         self.db.commit()
