@@ -1,5 +1,6 @@
 import sys
 import os, stat, time, tempfile
+import math
 import hashlib, codecs
 import string, re
 import Image, ImageStat, ImageMath
@@ -298,6 +299,13 @@ class Importer(object):
         im.load()
         
         width,height = im.size
+        MAX_IMAGE_SIZE = 10000000.0
+        if width*height > MAX_IMAGE_SIZE:
+            shrink_ratio = math.sqrt((width*height)/MAX_IMAGE_SIZE)
+            shrink_width = int(width/shrink_ratio)
+            shrink_height = int(height/shrink_ratio)
+            print "(Shrinking image '%s' to %dx%d for processing)" % (filename, shrink_width, shrink_height)
+            im = im.resize((shrink_width, shrink_height))
         
         dw,dh = width,height
         
