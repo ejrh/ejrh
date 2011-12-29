@@ -147,7 +147,7 @@ class Importer(object):
         
         try:
             l = os.listdir(actual_path)
-        except (OSError, WindowsError), inst:
+        except OSError, inst:
             exception_info("Couldn't list directory '%s'" % actual_path, inst)
             return []
         
@@ -165,7 +165,7 @@ class Importer(object):
                 continue
             try:
                 statinfo = os.lstat(item.actual_path)
-            except (OSError, WindowsError), inst:
+            except OSError, inst:
                 exception_info("Couldn't stat '%s'" % item.actual_path, inst)
                 continue
             if not stat.S_ISREG(statinfo[stat.ST_MODE]) and not stat.S_ISDIR(statinfo[stat.ST_MODE]):
