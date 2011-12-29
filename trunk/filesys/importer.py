@@ -1,3 +1,4 @@
+import sys
 import os, stat, time, tempfile
 import hashlib, codecs
 import string, re
@@ -7,6 +8,10 @@ import platform
 import socket
 
 WINDOWS = (platform.system() == 'Windows')
+
+
+def exception_info(msg, exc):
+    print >>sys.stderr, 'Exception info: %s; %s: %s' % (msg, type(exc), exc)
 
 
 class Item(object):
@@ -145,7 +150,8 @@ class Importer(object):
             try:
                 item.name = self.fs_decode(name)[0]
             except:
-                raise Exception("Couldn't decode %s!" % name)
+                warn("Couldn't decode %s!" % name)
+                raise
             item.path = path + '/' + name
             item.actual_path = os.path.join(actual_path, name)
             if self.ignore_re.search(item.path) or self.ignore_re2.search(item.path):
@@ -186,7 +192,8 @@ class Importer(object):
                 self.db.execute("""EXECUTE set_modified(%(id)s, %(name)s, %(modified)s)""", params)
                 self.db.altered = True
             except Exception, inst:
-                raise Exception("Couldn't set modified with dict %s, exception was %s" % (params, inst))
+                exception_info("Couldn't set modified with dict %s" % params, inst)
+                raise
         return dupe_item
 
 
@@ -196,7 +203,8 @@ class Importer(object):
             self.db.execute("""EXECUTE insert_file(%(name)s, %(size)s, %(modified)s, %(md5)s)""", params)
             self.db.altered = True
         except Exception, inst:
-            raise Exception("Couldn't insert file with dict %s, exception was %s: %s" % (params, type(inst), inst))
+            exception_info("Couldn't insert file with dict %s" % params, inst)
+            raise
         rows = self.db.fetchall()
         
         item.id = rows[0]['id']
@@ -212,7 +220,7 @@ class Importer(object):
             self.db.execute("""EXECUTE insert_dir(%(id)s, %(children)s, %(descendants)s)""", params)
             self.db.altered = True
         except Exception, inst:
-            print params
+            exception_info("Couldn't insert dir with dict %s" % params, inst)
             raise
 
         if item.is_drive:
@@ -220,15 +228,16 @@ class Importer(object):
             try:
                 self.db.execute("""EXECUTE insert_drive(%(id)s, %(free_space)s, %(total_space)s)""", params)
                 self.db.altered = True
-            except Exception,e:
-                raise Exception, """%s\n%s""" % (params, e)
+            except Exception, inst:
+                exception_info("Couldn't insert drive with dict %s" % params, inst)
+                raise
 
         params = [{'file_id': cid, 'dir_id': item.id} for cid in set(child_ids)]
         try:
             self.db.executemany("""EXECUTE insert_file_in_dir(%(file_id)s, %(dir_id)s)""", params)
             self.db.altered = True
         except Exception, inst:
-            print params
+            exception_info("Couldn't insert file_in_dir with dict %s" % params, inst)
             raise
 
         return item
@@ -247,7 +256,7 @@ class Importer(object):
             fd.close()
             return m.hexdigest()
         except Exception, inst:
-            print "Failed getting MD5 of %s, exception was %s" % (path, inst)
+            exception_info("Failed getting MD5 of %s" % path, inst)
             return None
 
 
@@ -357,7 +366,7 @@ class Importer(object):
             os.close(fp)
             os.unlink(tempname)
         except Exception, e:
-            print "Unable to create thumbnail for '%s', due to %s" % (filename, e)
+            exception_info("Unable to create thumbnail for '%s'" % filename, e)
             
         return image_id
 
@@ -386,14 +395,16 @@ class Importer(object):
             try:
                 image_id = self.import_image(item.actual_path, item.md5)
             except Exception, e:
-                print 'Image %s not processed due to exception: %s' % (item.actual_path, e)
+                exception_info('Image %s not processed' % item.actual_path, e)
                 image_id = None
             if image_id != None:
                 params = {"id": item.id}
                 try:
                     self.db.execute("""EXECUTE find_image_file(%(id)s)""", params)
                 except Exception, inst:
-                    raise Exception("Couldn't find duplicate image with dict %s, exception was %s, item.id = %s" % (params, inst, item.id))
+                    exception_info("Couldn't find duplicate image with dict %s, item.id = %s" % (params, item.id), inst)
+                    raise
+
                 rows = self.db.fetchall()
                 if len(rows) == 0:
                     params = {"file_id": item.id, "image_id": image_id}
@@ -431,7 +442,8 @@ class Importer(object):
         try:
             self.db.execute("""EXECUTE bulk_find_duplicates(%s::name_size_modified[])""", [params])
         except Exception, inst:
-            raise Exception("Couldn't find duplicates with list %s, exception was %s" % (params, inst))
+            exception_info("Couldn't find duplicates with list %s" % params, inst)
+            raise
         rows = self.db.fetchall()
         for r in rows:
             dupe_item = Item()
@@ -498,7 +510,8 @@ class Importer(object):
             for f,v in row.iteritems():
                 setattr(self, f, v)
         except Exception, e:
-            raise Exception('Error reading config!', e)
+            exception_info('Error reading config!', e)
+            raise
 
 
     def run(self, path):
