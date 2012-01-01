@@ -1,5 +1,6 @@
 #include "fractal.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 
 typedef struct FRACTAL
@@ -11,6 +12,11 @@ typedef struct FRACTAL
 FRACTAL *mandelbrot_create(WINDOW *win)
 {
     FRACTAL *f = malloc(sizeof(FRACTAL));
+    if (!f)
+    {
+        fprintf(stderr, "%s:%d: Can't create fractal!", __FILE__, __LINE__);
+        return NULL;
+    }
     f->window = win;
     return f;
 }

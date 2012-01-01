@@ -1,5 +1,6 @@
 #include "fractal.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -26,6 +27,11 @@ typedef struct DRAWING
 DRAWING *simple_create(WINDOW *window, FRACTAL *fractal, GET_POINT get_point, MFUNC *mfunc)
 {
     DRAWING *drawing = malloc(sizeof(DRAWING));
+    if (!drawing)
+    {
+        fprintf(stderr, "%s:%d: Can't create drawing!", __FILE__, __LINE__);
+        return NULL;
+    }
     drawing->window = window;
     drawing->fractal = fractal;
     drawing->mfunc = mfunc;
@@ -46,6 +52,11 @@ static void simple_allocate_slots(int num_slots, BATON *baton)
     
     drawing->x_slots = malloc(sizeof(int) * num_slots);
     drawing->y_slots = malloc(sizeof(int) * num_slots);
+    if (!drawing->x_slots || !drawing->y_slots)
+    {
+        fprintf(stderr, "Can't create slots!");
+        exit(1);
+    }
 }
 
 

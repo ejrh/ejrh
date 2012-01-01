@@ -36,6 +36,12 @@ DRAWING *iterative_create(WINDOW *window, FRACTAL *fractal, GET_POINT get_point,
     int i;
     
     DRAWING *drawing = malloc(sizeof(DRAWING));
+    if (!drawing)
+    {
+        fprintf(stderr, "%s:%d: Can't create drawing!", __FILE__, __LINE__);
+        return NULL;
+    }
+    
     drawing->window = window;
     drawing->fractal = fractal;
     drawing->mfunc = mfunc;
@@ -47,8 +53,23 @@ DRAWING *iterative_create(WINDOW *window, FRACTAL *fractal, GET_POINT get_point,
     drawing->x_slots = NULL;
     drawing->y_slots = NULL;
     drawing->done = malloc(drawing->width * drawing->height * sizeof(int));
+    if (!drawing->done)
+    {
+        fprintf(stderr, "Can't create done map!");
+        free(drawing);
+        return NULL;
+    }
     drawing->point_x = malloc(drawing->width * drawing->height * sizeof(double));
     drawing->point_y = malloc(drawing->width * drawing->height * sizeof(double));
+    if (!drawing->point_x || !drawing->point_y)
+    {
+        fprintf(stderr, "Can't create last point map!");
+        free(drawing->point_x);
+        free(drawing->point_y);
+        free(drawing->done);
+        free(drawing);
+        return NULL;
+    }
     drawing->iteration_depth = ITERATION_DEPTH_START;
     
     for (i = 0; i < drawing->width * drawing->height; i++)
@@ -68,6 +89,11 @@ static void iterative_allocate_slots(int num_slots, BATON *baton)
     
     drawing->x_slots = malloc(sizeof(int) * num_slots);
     drawing->y_slots = malloc(sizeof(int) * num_slots);
+    if (!drawing->x_slots || !drawing->y_slots)
+    {
+        fprintf(stderr, "Can't create slots!");
+        exit(1);
+    }
 }
 
 

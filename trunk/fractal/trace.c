@@ -60,7 +60,13 @@ static const int dy[] = { -1, 0, 1, 1, 1, 0, -1, -1 };
 DRAWING *trace_create(WINDOW *window, FRACTAL *fractal, GET_POINT get_point, MFUNC *mfunc)
 {
     int i;
+    int queue_size = window->width * window->height * 5;
     DRAWING *drawing = malloc(sizeof(DRAWING));
+    if (!drawing)
+    {
+        fprintf(stderr, "%s:%d: Can't create drawing!", __FILE__, __LINE__);
+        return NULL;
+    }
     
     drawing->window = window;
     drawing->fractal = fractal;
@@ -68,16 +74,25 @@ DRAWING *trace_create(WINDOW *window, FRACTAL *fractal, GET_POINT get_point, MFU
     drawing->get_point = get_point;
     drawing->width = window->width;
     drawing->height = window->height;
+    drawing->num_slots = 0;
     drawing->x_slots = NULL;
     drawing->y_slots = NULL;
-    drawing->pq = pq_create(0, drawing->width*drawing->height*5);
+    drawing->pq = pq_create(0, queue_size);
     if (!drawing->pq)
     {
-        fprintf(stderr, "Can't allocate PQ for %d items!", drawing->width*drawing->height*5);
-        exit(1);
+        fprintf(stderr, "Can't create PQ for %d items!", queue_size);
+        free(drawing);
+        return NULL;
     }
     
     drawing->done = malloc(sizeof(int) * drawing->width * drawing->height);
+    if (!drawing->done)
+    {
+        fprintf(stderr, "Can't create done map!");
+        pq_destroy(drawing->pq);
+        free(drawing);
+        return NULL;
+    }
     memset(drawing->done, 0, sizeof(int) * drawing->width * drawing->height);
     
     for (i = 0; i < NUM_SEEDS; i++)
@@ -174,10 +189,23 @@ static void trace_allocate_slots(int num_slots, BATON *baton)
     DRAWING *drawing = (DRAWING *) baton;
     int i;
     
+    if (drawing->num_slots >= num_slots)
+        return;
+    if (drawing->num_slots)
+    {
+        free(drawing->x_slots);
+        free(drawing->y_slots);
+    }
+    
     drawing->num_slots = num_slots;
     
     drawing->x_slots = malloc(sizeof(int) * num_slots);
     drawing->y_slots = malloc(sizeof(int) * num_slots);
+    if (!drawing->x_slots || !drawing->y_slots)
+    {
+        fprintf(stderr, "Can't create slots!");
+        exit(1);
+    }
     
     for (i = 0; i < num_slots; i++)
     {

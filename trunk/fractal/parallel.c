@@ -95,6 +95,11 @@ static void next_frame(DRAWING *drawing)
 DRAWING *parallel_create(WINDOW *window, FRACTAL *fractal, GET_POINT get_point, MFUNC *mfunc)
 {
     DRAWING *drawing = malloc(sizeof(DRAWING));
+    if (!drawing)
+    {
+        fprintf(stderr, "%s:%d: Can't create drawing!", __FILE__, __LINE__);
+        return NULL;
+    }
     
     drawing->window = window;
     drawing->fractal = fractal;
@@ -120,6 +125,11 @@ static void parallel_allocate_slots(int num_slots, BATON *baton)
 {
     baton->x_slots = malloc(sizeof(int) * num_slots);
     baton->y_slots = malloc(sizeof(int) * num_slots);
+    if (!baton->x_slots || !baton->y_slots)
+    {
+        fprintf(stderr, "Can't create slots!");
+        exit(1);
+    }
 }
 
 

@@ -191,10 +191,17 @@ void restart(OPTIONS *options, int new_mode)
         options->fractal = mandelbrot_create(&options->window);
     
     options->current_draw_mode = new_mode;
-    options->drawing = draw_modes[options->current_draw_mode].create(&options->window,
-            options->fractal,
-            fractal_modes[options->current_fractal_mode].get_point,
-            mfunc_modes[options->current_mfunc_mode].mfunc);
+    if (options->fractal != NULL)
+    {
+        options->drawing = draw_modes[options->current_draw_mode].create(&options->window,
+                options->fractal,
+                fractal_modes[options->current_fractal_mode].get_point,
+                mfunc_modes[options->current_mfunc_mode].mfunc);
+    }
+    else
+    {
+        options->drawing = NULL;
+    }
     pixels_done = 0;
     start_time = clock();
 }
@@ -202,7 +209,10 @@ void restart(OPTIONS *options, int new_mode)
 
 void update(OPTIONS *options)
 {
-    draw_modes[options->current_draw_mode].update(options->drawing);
+    if (options->drawing != NULL)
+        draw_modes[options->current_draw_mode].update(options->drawing);
+    else
+        status = "NO MODE";
 }
 
 
@@ -222,6 +232,11 @@ void finish(OPTIONS *options)
 static OPTIONS *create_options(void)
 {
     OPTIONS *options = malloc(sizeof(OPTIONS));
+    if (!options)
+    {
+        fprintf(stderr, "%s:%d: Can't create options!", __FILE__, __LINE__);
+        exit(1);
+    }
     
     options->fractal = NULL;
     options->drawing = NULL;
@@ -343,6 +358,11 @@ void do_benchmark(OPTIONS *options)
     display = SDL_CreateRGBSurface(SDL_SWSURFACE, options->screen_width, options->screen_height, 32, 0, 0, 0, 0);
     
     buffer = (float *) malloc(sizeof(int) * options->window.width * options->window.height);
+    if (!buffer)
+    {
+        fprintf(stderr, "%s:%d: Can't create buffer!", __FILE__, __LINE__);
+        exit(1);
+    }
     memset(buffer, 0, sizeof(int) * options->window.width * options->window.height);
 
     printf("Starting benchmark of mode %s, size %dx%d, max depth %d\n",
@@ -447,6 +467,11 @@ int main(int argc, char *argv[])
     options->window.smooth = 1;
     
     buffer = malloc(sizeof(float) * options->window.width * options->window.height);
+    if (!buffer)
+    {
+        fprintf(stderr, "%s:%d: Can't create buffer!", __FILE__, __LINE__);
+        exit(1);
+    }
     memset(buffer, 0, sizeof(float) * options->window.width * options->window.height);
 
     restart(options, options->current_draw_mode);
