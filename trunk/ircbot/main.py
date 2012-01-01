@@ -8,39 +8,10 @@ class CommandSyntaxError(Exception):
         super(CommandSyntaxError, self).__init__()
         self.message = message
 
-class Context(object):
-    """The context of a message in an IRC channel, that the Bot or a Handler might want to respond to."""
-
-    def __init__(self, bot, client, channel=None, nick=None):
-        self.bot = bot
-        self.client = client
-        self.channel = channel
-        self.nick = nick
-
-    def speak(self, text):
-        """Speak in reply to whomever or whatever originated the message."""
-        
-        if self.channel is not None:
-            recipient = self.channel
-        else:
-            recipient = self.nick
-        self.client.speak(recipient, text)
-
-    def act(self, action):
-        """Act in response to whomever or whatever originated the message."""
-        
-        if self.channel is not None:
-            recipient = self.channel
-        else:
-            recipient = self.nick
-        self.client.act(recipient, action)
-
-
 class Bot(irc.Controller):
-    def __init__(self, client):
+    def __init__(self):
         super(Bot, self).__init__()
         
-        self.client = client
         self.handlers = {}
         
         self.last_message = None
@@ -56,28 +27,18 @@ class Bot(irc.Controller):
         
         self.friends = ['edmund', 'edmund2', 'edmund3']
     
-    def observe_person(self, channel, prefix, name):
-        super(Bot, self).observe_person(channel, prefix, name)
-        
+    def handle_person(self, channel, name):
         if name in self.friends:
             #self.client.speak(channel, 'Hi %s' % name)
             pass
         
-    def observe_message(self, sender, recipient, text):
-        super(Bot, self).observe_message(sender, recipient, text)
-        
-        context = Context(self, self.client)
-        if recipient[0] == '#':
-            context.channel = recipient
-        context.nick = sender
-        context.text = text
-        
+    def handle_message(self, context, message):
         try:
             self.do_ambient(context)
         except Exception, ex:
             print ex
         
-        if not text.endswith('?') or sender not in self.friends:
+        if not message.endswith('?') or context.nick not in self.friends:
             return
         
         try:
@@ -87,16 +48,7 @@ class Bot(irc.Controller):
             self.last_message = ex.message
             print 'Message from handler: %s' % self.last_message
     
-    def observe_action(self, sender, recipient, action):
-        super(Bot, self).observe_action(sender, recipient, action)
-        
-        context = Context(self, self.client)
-        if recipient[0] == '#':
-            context.channel = recipient
-        context.nick = sender
-        context.action = action
-        context.text = '%s %s' % (sender, action)
-        
+    def handle_action(self, context, action):
         try:
             self.do_ambient(context)
         except Exception, ex:
@@ -190,7 +142,7 @@ class Bot(irc.Controller):
         if len(context.params) > 1:
             raise CommandSyntaxError('Superfluous params: %s' % (' '.join(context.params[1:])))
         name = context.params[0]
-        self.client.part(name)
+        context.client.part(name)
         context.speak('Ok')
 
 
@@ -201,7 +153,7 @@ client.nick = 'skynetbot'
 client.hostname = 'smaug'
 client.servername = 'smaug'
 client.realname = 'Skynet'
-client.controller = Bot(client)
+client.controller = Bot()
 client.connect('irc.freenode.net:6667')
 client.join('##skynetbot')
 if THREADING:
