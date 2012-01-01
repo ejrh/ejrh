@@ -160,7 +160,7 @@ class Client(object):
                     name = name[1:]
                 else:
                     prefix = ''
-                self.controller.observe_person(channel, prefix, name)
+                self.controller.observe_person(self, channel, prefix, name)
         elif message.command == 'PRIVMSG':
             name = message.prefix
             if '!' in name:
@@ -169,15 +169,15 @@ class Client(object):
             text = message.params[-1]
             if text.startswith(ACTION_PREFIX) and text.endswith(ACTION_SUFFIX):
                 action = text[len(ACTION_PREFIX):len(text) - len(ACTION_SUFFIX)]
-                self.controller.observe_action(name, recipient, action)
+                self.controller.observe_action(self, name, recipient, action)
             else:
-                self.controller.observe_message(name, recipient, text)
+                self.controller.observe_message(self, name, recipient, text)
         elif message.command == 'JOIN':
             name = message.prefix
             if '!' in name:
                 name = name.split('!', 1)[0]
             channel = message.params[-1]
-            self.controller.observe_person(channel, '', name)
+            self.controller.observe_person(self, channel, '', name)
         elif message.command == 'PING':
             server = message.params[-1]
             pong = Message(None, 'PONG', [self.servername, server])
