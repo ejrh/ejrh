@@ -7,6 +7,8 @@ import Image, ImageStat, ImageMath
 from database import Connection, TransactionRollbackError
 import platform
 import socket
+from optparse import OptionParser
+
 
 WINDOWS = (platform.system() == 'Windows')
 
@@ -552,7 +554,7 @@ class Importer(object):
             raise
 
 
-    def run(self, path):
+    def run(self, path, db_host=None):
         root_item = Item()
         root_item.path = path
         root_item.name = path
@@ -570,7 +572,11 @@ class Importer(object):
         self.db_decode = codecs.getdecoder(db_codec)
         self.db_encode = codecs.getencoder(db_codec)
         
-        self.db = Connection()
+        if db_host is not None:
+            connstr = "dbname='filesys' user='localuser' host='%s' password='localuser'" % db_host
+        else:
+            connstr = None
+        self.db = Connection(connstr)
         self.db.connect()
         self.db.execute("SET client_encoding = UTF8");
         self.db.transaction_number = 0
@@ -597,10 +603,18 @@ class Importer(object):
 
 
 if __name__ == "__main__":
-    import sys
-    try:
-        path = sys.argv[1]
-    except IndexError:
+    usage = """usage: %prog PATH [-h DB_HOST]"""
+    desc = """Import a directory into the filesystem database."""
+    parser = OptionParser(usage=usage, description=desc)
+    parser.add_option("-d", metavar="DB_HOST",
+                      action="store", dest="db_host",
+                      help="specify the host of the filesys database")
+
+    options, args = parser.parse_args()
+    if len(args) == 0:
         path = ''
+    else:
+        path = args[0]
+    
     i = Importer()
-    i.run(path)
+    i.run(path, options.db_host)
