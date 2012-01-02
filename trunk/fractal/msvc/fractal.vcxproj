@@ -13,19 +13,24 @@
   <ItemGroup>
     <ClCompile Include="..\colour.c" />
     <ClCompile Include="..\fractal.c" />
+    <ClCompile Include="..\graphics.c" />
     <ClCompile Include="..\iterative.c" />
+    <ClCompile Include="..\julia.c" />
     <ClCompile Include="..\main.c" />
     <ClCompile Include="..\mandelbrot.c" />
     <ClCompile Include="..\mfunc.c" />
+    <ClCompile Include="..\mfunc_int.c" />
     <ClCompile Include="..\mfunc_simd.c" />
     <ClCompile Include="..\mfunc_simd_float.c" />
     <ClCompile Include="..\parallel.c" />
     <ClCompile Include="..\pq.c" />
     <ClCompile Include="..\simple.c" />
+    <ClCompile Include="..\simple_opencl.c" />
     <ClCompile Include="..\trace.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\fractal.h" />
+    <ClInclude Include="..\graphics.h" />
     <ClInclude Include="..\mfunc.h" />
     <ClInclude Include="..\pq.h" />
   </ItemGroup>
@@ -58,14 +63,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\edmund\sc2\SDL-1.2.11\include;C:\edmund\sc2\SDL_ttf-2.0.10\include;.;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\edmund\sc2\SDL-1.2.11\lib;C:\edmund\sc2\SDL_ttf-2.0.10\lib;C:\edmund\sc2\vcomp;$(LibraryPath)</LibraryPath>
-    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+    <IncludePath>C:\edmund\source\coprthr-1.3.0-source\browndeer-coprthr-1d076b6\msvs2010\libstdcl;C:\edmund\source\coprthr-1.3.0-source\browndeer-coprthr-1d076b6\src\libstdcl;C:\Edmund\source\coprthr-1.3.0-source\browndeer-coprthr-1d076b6\include;c:\edmund\sc2\SDL-1.2.11\include;C:\edmund\sc2\SDL_ttf-2.0.10\include;c:\Program Files (x86)\AMD APP\include;.;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\edmund\sc2\SDL-1.2.11\lib;C:\edmund\sc2\SDL_ttf-2.0.10\lib;C:\edmund\sc2\vcomp;c:\edmund\source\coprthr-1.3.0-source\browndeer-coprthr-1d076b6\msvs2010\libstdcl\Release\;c:\Program Files (x86)\AMD APP\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\edmund\sc2\SDL-1.2.11\include;C:\edmund\sc2\SDL_ttf-2.0.10\include;.;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\edmund\sc2\SDL-1.2.11\lib;C:\edmund\sc2\SDL_ttf-2.0.10\lib;C:\edmund\sc2\vcomp;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\edmund\source\coprthr-1.3.0-source\browndeer-coprthr-1d076b6\msvs2010\libstdcl;C:\edmund\source\coprthr-1.3.0-source\browndeer-coprthr-1d076b6\src\libstdcl;C:\Edmund\source\coprthr-1.3.0-source\browndeer-coprthr-1d076b6\include;c:\edmund\sc2\SDL-1.2.11\include;C:\edmund\sc2\SDL_ttf-2.0.10\include;c:\Program Files (x86)\AMD APP\include;.;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\edmund\sc2\SDL-1.2.11\lib;C:\edmund\sc2\SDL_ttf-2.0.10\lib;C:\edmund\sc2\vcomp;c:\edmund\source\coprthr-1.3.0-source\browndeer-coprthr-1d076b6\msvs2010\libstdcl\Release\;c:\Program Files (x86)\AMD APP\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -82,7 +86,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL.lib;SDLmain.lib;SDL_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL.lib;SDLmain.lib;SDL_ttf.lib;libstdcl.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>
       </EntryPointSymbol>
       <IgnoreSpecificDefaultLibraries>msvcrt</IgnoreSpecificDefaultLibraries>
@@ -104,7 +108,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>SDL.lib;SDLmain.lib;SDL_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL.lib;SDLmain.lib;SDL_ttf.lib;libstdcl.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>
       </EntryPointSymbol>
     </Link>

@@ -43,6 +43,18 @@
     <ClCompile Include="..\fractal.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\graphics.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\julia.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\simple_opencl.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mfunc_int.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\pq.h">
@@ -52,6 +64,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\mfunc.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\graphics.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

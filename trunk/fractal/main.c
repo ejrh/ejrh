@@ -48,6 +48,7 @@ static struct {
     { "PARALLEL", parallel_create, parallel_update, parallel_destroy },
     { "TRACE", trace_create, trace_update, trace_destroy },
     { "ITERATIVE", iterative_create, iterative_update, iterative_destroy },
+    { "SIMPLE_OPENCL", simple_opencl_create, simple_opencl_update, simple_opencl_destroy },
     { NULL }
 };
 static int num_draw_modes;
