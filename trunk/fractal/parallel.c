@@ -6,7 +6,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#if defined(WIN32) || defined(_WIN64)
+#ifdef WIN32
     extern int omp_get_num_procs(void);
 #else
     #include <omp.h>
