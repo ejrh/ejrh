@@ -4,6 +4,8 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#ifdef ENABLE_SIMPLE_OPENCL
+
 #define typeof
 #include <stdcl.h>
 
@@ -200,3 +202,5 @@ void simple_opencl_destroy(DRAWING *drawing)
 {
     free(drawing);
 }
+
+#endif

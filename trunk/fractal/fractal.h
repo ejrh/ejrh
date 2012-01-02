@@ -93,9 +93,11 @@ extern DRAWING *iterative_create(WINDOW *window, FRACTAL *fractal, GET_POINT get
 extern void iterative_update(DRAWING *drawing);
 extern void iterative_destroy(DRAWING *drawing);
 
+#ifdef ENABLE_SIMPLE_OPENCL
 extern DRAWING *simple_opencl_create(WINDOW *window, FRACTAL *fractal, GET_POINT get_point, MFUNC *mfunc);
 extern void simple_opencl_update(DRAWING *drawing);
 extern void simple_opencl_destroy(DRAWING *drawing);
+#endif
 
 /** Build a colour map based on a distribution of values.  The map is an
  * ordered sequence of values; a value x will be mapped to i where map[i] is
