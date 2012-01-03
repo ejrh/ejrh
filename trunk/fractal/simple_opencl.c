@@ -101,6 +101,9 @@ static int opencl_setup(cl_uint workgroup_size, cl_uint work_size)
 }
 
 
+#define ROWS_PER_WORKLOAD 25
+
+
 static void opencl_shutdown(void)
 {
     clfree(zx);
@@ -119,7 +122,7 @@ static void opencl_shutdown(void)
 void simple_opencl_update(DRAWING *drawing)
 {
     cl_uint workgroup_size = 64;
-    cl_uint work_size = drawing->width;
+    cl_uint work_size = drawing->width*ROWS_PER_WORKLOAD;
 
     int j;
 
@@ -131,6 +134,9 @@ void simple_opencl_update(DRAWING *drawing)
         return;
     }
 
+    if (drawing->i + work_size/drawing->width >= drawing->height)
+        work_size = (drawing->height - drawing->i)*drawing->width;
+
     if (!opencl_setup(workgroup_size, work_size))
     {
         return;
@@ -139,7 +145,10 @@ void simple_opencl_update(DRAWING *drawing)
     for (j = 0; j < work_size; j++)
     {
         double temps[4];
-        drawing->get_point(drawing->fractal, j, drawing->i, &temps[0], &temps[1], &temps[2], &temps[3]);
+        int px = j % drawing->width;
+        int py = drawing->i + j / drawing->width;
+
+        drawing->get_point(drawing->fractal, px, py, &temps[0], &temps[1], &temps[2], &temps[3]);
         zx[j] = temps[0];
         zy[j] = temps[1];
         cx[j] = temps[2];
@@ -180,7 +189,10 @@ void simple_opencl_update(DRAWING *drawing)
 
     for (j = 0; j < work_size; j++)
     {
+        int px = j % drawing->width;
+        int py = drawing->i + j / drawing->width;
         int k;
+
         if (vs[j] == 0)
         {
             k = 0;
@@ -190,10 +202,10 @@ void simple_opencl_update(DRAWING *drawing)
             k = drawing->window->depth - vs[j];
         }
     
-        set_pixel(drawing->window, j, drawing->i, k, fx[j], fy[j]);
+        set_pixel(drawing->window, px, py, k, fx[j], fy[j]);
     }
 
-    drawing->i++;
+    drawing->i += work_size/drawing->width;
     status = "OPENCL'ING";
 }
 
