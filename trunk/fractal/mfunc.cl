@@ -12,7 +12,10 @@ __kernel void mfunc_kern(
     /* Outputs. */
     __global unsigned short *vs,
     __global float *fx,
-    __global float *fy
+    __global float *fy,
+    
+    /* Maximum depth to search to. */
+    uint depth
 ) 
 {
     int i = get_global_id(0); 
@@ -30,7 +33,7 @@ __kernel void mfunc_kern(
         float ci = gcy[j];
         
         /* Remaining depth to search up to. */
-        int remaining = 1024;
+        int remaining = depth;
         
         /* Iterate until depth exhausted or point escapes set. */
         while (remaining && zr2 + zi2 < 4.0f)

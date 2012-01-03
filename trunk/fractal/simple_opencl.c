@@ -164,6 +164,7 @@ void simple_opencl_update(DRAWING *drawing)
     /* non-blocking fork of the OpenCL kernel to execute on the GPU */
     clarg_set(cp, krn, 0, (cl_uint) workgroup_size);
     clarg_set(cp, krn, 1, (cl_uint) work_size);
+    
     clarg_set_global(cp, krn, 2, (cl_float *)(intptr_t)(zx));
     clarg_set_global(cp, krn, 3, (cl_float *)(intptr_t)(zy));
     clarg_set_global(cp, krn, 4, (cl_float *)(intptr_t)(cx));
@@ -173,6 +174,8 @@ void simple_opencl_update(DRAWING *drawing)
     clarg_set_global(cp, krn, 7, (cl_float *)(intptr_t)(fx));
     clarg_set_global(cp, krn, 8, (cl_float *)(intptr_t)(fy));
 
+    clarg_set(cp, krn, 9, (cl_uint) drawing->window->depth);
+    
     clfork(cp, devnum, krn, &ndr, CL_EVENT_NOWAIT);
 
     /* non-blocking sync vector c to host memory (copy back to host) */
