@@ -50,7 +50,7 @@ static cl_ushort *vs;
 static cl_float *fx, *fy;
 
 
-static int opencl_setup(cl_uint workgroup_size, cl_uint row_size)
+static int opencl_setup(cl_uint workgroup_size, cl_uint work_size)
 {
     if (!has_inited)
     {
@@ -88,14 +88,14 @@ static int opencl_setup(cl_uint workgroup_size, cl_uint row_size)
     }
 
     /* allocate OpenCL device-sharable memory */
-    zx = clmalloc(cp, row_size*sizeof(cl_float), 0);
-    zy = clmalloc(cp, row_size*sizeof(cl_float), 0);
-    cx = clmalloc(cp, row_size*sizeof(cl_float), 0);
-    cy = clmalloc(cp, row_size*sizeof(cl_float), 0);
+    zx = clmalloc(cp, work_size*sizeof(cl_float), 0);
+    zy = clmalloc(cp, work_size*sizeof(cl_float), 0);
+    cx = clmalloc(cp, work_size*sizeof(cl_float), 0);
+    cy = clmalloc(cp, work_size*sizeof(cl_float), 0);
 
-    vs = clmalloc(cp, row_size*sizeof(cl_ushort), 0);
-    fx = clmalloc(cp, row_size*sizeof(cl_float), 0);
-    fy = clmalloc(cp, row_size*sizeof(cl_float), 0);
+    vs = clmalloc(cp, work_size*sizeof(cl_ushort), 0);
+    fx = clmalloc(cp, work_size*sizeof(cl_float), 0);
+    fy = clmalloc(cp, work_size*sizeof(cl_float), 0);
 
     return 1;
 }
@@ -119,7 +119,7 @@ static void opencl_shutdown(void)
 void simple_opencl_update(DRAWING *drawing)
 {
     cl_uint workgroup_size = 64;
-    cl_uint row_size = drawing->width;
+    cl_uint work_size = drawing->width;
 
     int j;
 
@@ -131,12 +131,12 @@ void simple_opencl_update(DRAWING *drawing)
         return;
     }
 
-    if (!opencl_setup(workgroup_size, row_size))
+    if (!opencl_setup(workgroup_size, work_size))
     {
         return;
     }
 
-    for (j = 0; j < row_size; j++)
+    for (j = 0; j < work_size; j++)
     {
         double temps[4];
         drawing->get_point(drawing->fractal, j, drawing->i, &temps[0], &temps[1], &temps[2], &temps[3]);
@@ -154,7 +154,7 @@ void simple_opencl_update(DRAWING *drawing)
 
     /* non-blocking fork of the OpenCL kernel to execute on the GPU */
     clarg_set(cp, krn, 0, (cl_uint) workgroup_size);
-    clarg_set(cp, krn, 1, (cl_uint) row_size);
+    clarg_set(cp, krn, 1, (cl_uint) work_size);
     clarg_set_global(cp, krn, 2, (cl_float *)(intptr_t)(zx));
     clarg_set_global(cp, krn, 3, (cl_float *)(intptr_t)(zy));
     clarg_set_global(cp, krn, 4, (cl_float *)(intptr_t)(cx));
@@ -178,7 +178,7 @@ void simple_opencl_update(DRAWING *drawing)
     /* block on completion of operations in command queue */
     clwait(cp, devnum, CL_ALL_EVENT);
 
-    for (j = 0; j < row_size; j++)
+    for (j = 0; j < work_size; j++)
     {
         int k;
         if (vs[j] == 0)
