@@ -15,7 +15,7 @@ __kernel void mfunc_kern(
     __global float *fy,
     
     /* Maximum depth to search to. */
-    uint depth,
+    uint depth
 ) 
 {
     int i = get_global_id(0); 
