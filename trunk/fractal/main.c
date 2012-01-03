@@ -248,6 +248,8 @@ static OPTIONS *create_options(void)
     options->current_draw_mode = 0;
     options->current_mfunc_mode = 0;
     options->current_depth_mode = MIN_DEPTH_MODE;
+
+    options->window.depth = 0;
     
     options->benchmark = 0;
     options->benchmark_loops = 5;
@@ -343,6 +345,7 @@ static void parse_args(int argc, char *argv[], OPTIONS *options)
 
 
 #define BENCHMARK_SIZE 1000
+#define BENCHMARK_DEPTH 1024
 
 
 void do_benchmark(OPTIONS *options)
@@ -357,6 +360,9 @@ void do_benchmark(OPTIONS *options)
     options->window.width = options->screen_width * 2;
     options->window.height = options->screen_height * 2;
     options->window.scale = 0.000732 / options->screen_height;
+
+    if (options->window.depth == 0)
+        options->window.depth = BENCHMARK_DEPTH;
 
     display = SDL_CreateRGBSurface(SDL_SWSURFACE, options->screen_width, options->screen_height, 32, 0, 0, 0, 0);
     
