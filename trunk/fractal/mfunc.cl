@@ -31,7 +31,7 @@ __kernel void mfunc_kern(
             zi2 = zi*zi;
             t = zr*zi;
             zr = zr2 - zi2 + cr;
-            zi = t + t + ci;
+            zi = 2.0f * t + ci;
 
             remaining--;
         }
