@@ -94,6 +94,8 @@ typedef struct OPTIONS
     int current_mfunc_mode;
     int current_depth_mode;
 
+    int auto_mode;
+
     int benchmark;
     int benchmark_loops;
 } OPTIONS;
@@ -250,6 +252,8 @@ static OPTIONS *create_options(void)
     options->current_depth_mode = MIN_DEPTH_MODE;
 
     options->window.depth = 0;
+
+    options->auto_mode = 0;
     
     options->benchmark = 0;
     options->benchmark_loops = 5;
@@ -270,7 +274,11 @@ static void parse_args(int argc, char *argv[], OPTIONS *options)
     
     for (i = 1; i < argc; i++)
     {
-        if (strcmp(argv[i], "--benchmark") == 0)
+        if (strcmp(argv[i], "--auto") == 0)
+        {
+            options->auto_mode = 1;
+        }
+        else if (strcmp(argv[i], "--benchmark") == 0)
         {
             options->benchmark = 1;
         }
@@ -410,6 +418,8 @@ void do_benchmark(OPTIONS *options)
 
 #define FULL_SCREEN 1
 
+#define AUTO_TIMER_START 10
+
 int main(int argc, char *argv[])
 {
     SDL_Event evt;
@@ -418,6 +428,7 @@ int main(int argc, char *argv[])
     const SDL_VideoInfo* video_info;
     int save_num = 0;
     OPTIONS *options;
+    int auto_timer = AUTO_TIMER_START;
 
     num_fractal_modes = 0;
     while (fractal_modes[num_fractal_modes].name != NULL)
@@ -579,6 +590,10 @@ int main(int argc, char *argv[])
                 options->window.smooth = !options->window.smooth;
                 restart(options, options->current_draw_mode);
             }
+            else if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_7)
+            {
+                options->auto_mode = !options->auto_mode;
+            }
             else if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_c)
             {
                 colourise(options);
@@ -653,7 +668,39 @@ int main(int argc, char *argv[])
         SDL_UpdateRect(display, 0, 0, options->screen_width, options->screen_height);
 
         if (pixels_done >= options->window.width * options->window.height)
+        {
             SDL_Delay(100);
+
+            if (options->auto_mode)
+            {
+                auto_timer--;
+                if (auto_timer <= 0)
+                {
+                    int best_x = 0, best_y = 0;
+                    float best = 0.0;
+                    int i, j;
+                    for (i = 0; i < options->window.height; i++)
+                        for (j = 0; j < options->window.width; j++)
+                        {
+                            if (buffer[i*options->window.width + j] > best)
+                            {
+                                best = buffer[i*options->window.width + j];
+                                best_x = j;
+                                best_y = i;
+                            }
+                        }
+
+                    pixel_to_point(&options->window, best_x, best_y, &options->window.centrex, &options->window.centrey);
+                    options->window.scale *= M_SQRT1_2;
+                    fade_screen(options);
+                    restart(options, options->current_draw_mode);
+                }
+            }
+        }
+        else
+        {
+            auto_timer = AUTO_TIMER_START;
+        }
     }
     
     finish(options);
