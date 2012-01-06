@@ -386,7 +386,7 @@ void do_benchmark(OPTIONS *options)
             draw_modes[options->current_draw_mode].name, options->window.width, options->window.height, options->window.depth);
     
     average_pps = 0;
-    for (i = 1; i <= options->benchmark_loops; i++)
+    for (i = 0; i <= options->benchmark_loops; i++)
     {
         float seconds;
         int pixels_per_second;
@@ -402,8 +402,9 @@ void do_benchmark(OPTIONS *options)
         seconds = (end_time - start_time) / (float) CLOCKS_PER_SEC;
         pixels_per_second = (seconds > 0) ? pixels_done/seconds : 0;
         
-        printf("Benchmark iteration %d, PPS was %d\n", i, pixels_per_second);
-        average_pps += pixels_per_second;
+        printf("Benchmark iteration %d, PPS was %d%s\n", i, pixels_per_second, (i == 0) ? " (warming up; not counted)" : "");
+        if (i > 0)
+            average_pps += pixels_per_second;
     }
 
     snprintf(filename, sizeof(filename), "%s_%dx%d_%d.bmp", draw_modes[options->current_draw_mode].name, options->window.width, options->window.height, options->window.depth);
