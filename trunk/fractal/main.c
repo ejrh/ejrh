@@ -116,7 +116,7 @@ void set_pixel(WINDOW *window, int x, int y, int k, float fx, float fy)
     double f, g;
     float val;
 
-    if (window->smooth)
+    if (window->smooth && k != 0)
     {
         float z = sqrt(fx*fx + fy*fy);
         val = (float) k - log(log(z))/log(2.0);
