@@ -95,6 +95,7 @@ typedef struct OPTIONS
     int current_depth_mode;
 
     int auto_mode;
+    int screensaver_mode;
 
     int benchmark;
     int benchmark_loops;
@@ -254,6 +255,7 @@ static OPTIONS *create_options(void)
     options->window.depth = 0;
 
     options->auto_mode = 0;
+    options->screensaver_mode = 0;
     
     options->benchmark = 0;
     options->benchmark_loops = 5;
@@ -274,7 +276,12 @@ static void parse_args(int argc, char *argv[], OPTIONS *options)
     
     for (i = 1; i < argc; i++)
     {
-        if (strcmp(argv[i], "--auto") == 0)
+        if (strcmp(argv[i], "/s") == 0)
+        {
+            options->auto_mode = 1;
+            options->screensaver_mode = 1;
+        }
+        else if (strcmp(argv[i], "--auto") == 0)
         {
             options->auto_mode = 1;
         }
@@ -420,6 +427,8 @@ void do_benchmark(OPTIONS *options)
 #define FULL_SCREEN 1
 
 #define AUTO_TIMER_START 10
+
+#define SCREENSAVER_MOUSE_THRESHOLD 5
 
 int main(int argc, char *argv[])
 {
@@ -605,6 +614,16 @@ int main(int argc, char *argv[])
                 snprintf(buffer, sizeof(buffer), "save%04d.bmp", save_num);
                 save_num++;
                 SDL_SaveBMP(display, buffer);
+            }
+            else if (options->screensaver_mode && (
+                evt.type == SDL_KEYDOWN ||
+                evt.type == SDL_MOUSEBUTTONDOWN || (
+                    evt.type == SDL_MOUSEMOTION &&
+                    pixels_done > 0 &&
+                    (abs(evt.motion.xrel) > SCREENSAVER_MOUSE_THRESHOLD ||
+                        abs(evt.motion.yrel) > SCREENSAVER_MOUSE_THRESHOLD))))
+            {
+                running = 0;
             }
             else if (evt.type == SDL_MOUSEBUTTONDOWN && evt.button.button == 1)
             {
