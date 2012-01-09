@@ -55,15 +55,20 @@ static struct {
 };
 static int num_draw_modes;
 
+#define EFFECTIVE_DOUBLE_RES 0.0000000000001
+#define EFFECTIVE_FLOAT_RES 0.000001
+#define EFFECTIVE_INT_RES 0.0001
+
 static struct {
     char *name;
     MFUNC *mfunc;
+    double effective_resolution;
 } mfunc_modes[] = {
-    { "LOOP", mfunc_loop },
-    { "LOOP_FLOAT", mfunc_loop_float },
-    { "LOOP_INT", mfunc_loop_int },
-    { "SIMD", mfunc_simd },
-    { "SIMD_FLOAT", mfunc_simd_float },
+    { "LOOP", mfunc_loop, EFFECTIVE_DOUBLE_RES },
+    { "LOOP_FLOAT", mfunc_loop_float, EFFECTIVE_FLOAT_RES },
+    { "LOOP_INT", mfunc_loop_int, EFFECTIVE_INT_RES },
+    { "SIMD", mfunc_simd, EFFECTIVE_DOUBLE_RES },
+    { "SIMD_FLOAT", mfunc_simd_float, EFFECTIVE_FLOAT_RES },
     { NULL }
 };
 static int num_mfunc_modes;
@@ -699,6 +704,7 @@ int main(int argc, char *argv[])
                     int best_x = 0, best_y = 0;
                     float best = 0.0;
                     int i, j;
+
                     for (i = 0; i < options->window.height; i++)
                         for (j = 0; j < options->window.width; j++)
                         {
@@ -711,7 +717,10 @@ int main(int argc, char *argv[])
                         }
 
                     pixel_to_point(&options->window, best_x, best_y, &options->window.centrex, &options->window.centrey);
-                    options->window.scale *= M_SQRT1_2;
+                    if (options->window.scale < mfunc_modes[options->current_mfunc_mode].effective_resolution)
+                        options->window.scale = 1.5 / options->screen_height;
+                    else
+                        options->window.scale *= M_SQRT1_2;
                     fade_screen(options);
                     restart(options, options->current_draw_mode);
                 }
