@@ -118,6 +118,10 @@ class Board(object):
             
             # Reset tries_left for the next node to add.
             tries_left = 100
+        
+        # Finally set some board information
+        self.num_nodes = len(nodes)
+        self.zero_nodes = 0
 
     def unsolve(self):
         """Unsolve a board by erasing the edges on it."""
@@ -126,6 +130,8 @@ class Board(object):
             for i in range(len(r)):
                 if r[i] == '-' or r[i] == '|':
                     r[i] = ' '
+        
+        self.zero_nodes = 0
     
     def find_moves(self, x, y):
         """Find the possible moves in spot (x, y).  A move is a tuple
@@ -223,9 +229,20 @@ class Board(object):
         for i in range(1,k):
             self.cells[y1+i*dy][x1+i*dx] = c
         
+        # Adjust nodes at each end, and count of zero nodes
+        if self.cells[y1][x1] == 0:
+            self.zero_nodes -= 1
+        if self.cells[y2][x2] == 0:
+            self.zero_nodes -= 1
+        
         self.cells[y1][x1] += inc
         self.cells[y2][x2] += inc
 
+        if self.cells[y1][x1] == 0:
+            self.zero_nodes += 1
+        if self.cells[y2][x2] == 0:
+            self.zero_nodes += 1
+    
     def __str__(self):
         """Return a string representation of the board."""
         rs = []
@@ -348,6 +365,12 @@ class Window(object):
             w = (x2 - x1 + 1) * self.TILE_WIDTH
             h = (y2 - y1 + 1) * self.TILE_HEIGHT
             pygame.draw.rect(self.display, (255, 0, 0), pygame.Rect(px, py, w, h), 1)
+        
+        # Draw game summary info
+        text_col = (255, 255, 255)
+        text = self.font.render("Complete %d/%d" % (self.board.zero_nodes, self.board.num_nodes), False, text_col)
+        self.display.blit(text, (0, 0))
+
     
     def update(self):
         """Update the window.  Draw the board, then flip the PyGame display
