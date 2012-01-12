@@ -7,66 +7,66 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\main.c">
+    <ClCompile Include="..\src\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\parallel.c">
+    <ClCompile Include="..\src\parallel.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\pq.c">
+    <ClCompile Include="..\src\pq.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\trace.c">
+    <ClCompile Include="..\src\trace.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\mfunc.c">
+    <ClCompile Include="..\src\mfunc.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\simple.c">
+    <ClCompile Include="..\src\simple.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\mfunc_simd.c">
+    <ClCompile Include="..\src\mfunc_simd.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\mfunc_simd_float.c">
+    <ClCompile Include="..\src\mfunc_simd_float.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\colour.c">
+    <ClCompile Include="..\src\colour.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\iterative.c">
+    <ClCompile Include="..\src\iterative.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\mandelbrot.c">
+    <ClCompile Include="..\src\mandelbrot.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\fractal.c">
+    <ClCompile Include="..\src\fractal.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\graphics.c">
+    <ClCompile Include="..\src\graphics.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\julia.c">
+    <ClCompile Include="..\src\julia.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\simple_opencl.c">
+    <ClCompile Include="..\src\simple_opencl.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\mfunc_int.c">
+    <ClCompile Include="..\src\mfunc_int.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\pq.h">
+    <ClInclude Include="..\src\pq.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\fractal.h">
+    <ClInclude Include="..\src\fractal.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\mfunc.h">
+    <ClInclude Include="..\src\mfunc.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\graphics.h">
+    <ClInclude Include="..\src\graphics.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -11,28 +11,28 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\colour.c" />
-    <ClCompile Include="..\fractal.c" />
-    <ClCompile Include="..\graphics.c" />
-    <ClCompile Include="..\iterative.c" />
-    <ClCompile Include="..\julia.c" />
-    <ClCompile Include="..\main.c" />
-    <ClCompile Include="..\mandelbrot.c" />
-    <ClCompile Include="..\mfunc.c" />
-    <ClCompile Include="..\mfunc_int.c" />
-    <ClCompile Include="..\mfunc_simd.c" />
-    <ClCompile Include="..\mfunc_simd_float.c" />
-    <ClCompile Include="..\parallel.c" />
-    <ClCompile Include="..\pq.c" />
-    <ClCompile Include="..\simple.c" />
-    <ClCompile Include="..\simple_opencl.c" />
-    <ClCompile Include="..\trace.c" />
+    <ClCompile Include="..\src\colour.c" />
+    <ClCompile Include="..\src\fractal.c" />
+    <ClCompile Include="..\src\graphics.c" />
+    <ClCompile Include="..\src\iterative.c" />
+    <ClCompile Include="..\src\julia.c" />
+    <ClCompile Include="..\src\main.c" />
+    <ClCompile Include="..\src\mandelbrot.c" />
+    <ClCompile Include="..\src\mfunc.c" />
+    <ClCompile Include="..\src\mfunc_int.c" />
+    <ClCompile Include="..\src\mfunc_simd.c" />
+    <ClCompile Include="..\src\mfunc_simd_float.c" />
+    <ClCompile Include="..\src\parallel.c" />
+    <ClCompile Include="..\src\pq.c" />
+    <ClCompile Include="..\src\simple.c" />
+    <ClCompile Include="..\src\simple_opencl.c" />
+    <ClCompile Include="..\src\trace.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\fractal.h" />
-    <ClInclude Include="..\graphics.h" />
-    <ClInclude Include="..\mfunc.h" />
-    <ClInclude Include="..\pq.h" />
+    <ClInclude Include="..\src\fractal.h" />
+    <ClInclude Include="..\src\graphics.h" />
+    <ClInclude Include="..\src\mfunc.h" />
+    <ClInclude Include="..\src\pq.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B23489E0-63C8-42CA-87F3-EAE19E075392}</ProjectGuid>
