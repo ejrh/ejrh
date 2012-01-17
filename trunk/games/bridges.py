@@ -271,6 +271,68 @@ class Board(object):
         return s
 
 
+class ComponentsMap(object):
+    """A mapping from board cells to connected components.  Also determines
+    whether each component has a cycle.  Only looks at components containing
+    nodes and bridges (inside components); if all components are acyclic, then
+    there is by duality a single outside component.  Similarly, If there is a
+    single inside component, then the outside component must be acyclic."""
+    
+    def __init__(self, board):
+        self.board = board
+        self.size = board.size
+        self.erase()
+
+    def erase(self):
+        self.cells = []
+        for i in range(self.size):
+            row = [None] * self.size
+            self.cells.append(row)
+        
+        self.components = []
+
+    def update(self):
+        """Analyse the board to find connected components and cycles."""
+        
+        self.erase()
+
+        offset = random.randrange(self.size)
+        for i0 in range(self.size):
+            i = (i0 + offset) % self.size
+            for j in range(self.size):
+                if self.board.cells[i][j] != ' ' and self.cells[i][j] is None:
+                    colour = len(self.components)
+                    cyclic = self.search(j, i, colour)
+                    self.components.append(cyclic)
+    
+    def search(self, x, y, colour, last_x=None, last_y=None):
+        """Perform a depth-first-search of a component, starting from a node
+        and traversing along its bridges, colouring it.  Returns True if the
+        component was cyclic."""
+        
+        self.cells[y][x] = colour
+        
+        cyclic = False
+        
+        dirs = [(0,-1, ['|', 'H']), (0,1, ['|', 'H']), (-1,0, ['-', '=']), (1, 0, ['-', '='])]
+        for dx,dy,valid in dirs:
+            new_x = x + dx
+            new_y = y + dy
+            if not self.board.in_range(new_x, new_y) or self.board.cells[new_y][new_x] not in valid or (new_x == last_x and new_y == last_y):
+                continue
+            while type(self.board.cells[new_y][new_x]) is not int:
+                self.cells[new_y][new_x] = colour
+                new_x += dx
+                new_y += dy
+            if self.cells[new_y][new_x] == colour:
+                cyclic = True
+            else:
+                if self.search(new_x, new_y, colour, new_x - dx, new_y - dy):
+                    cyclic = True
+        
+        return cyclic
+
+
 class Window(object):
     """The Window; draws a graphical representation of the game onto a
     pygame display."""
@@ -312,6 +374,10 @@ class Window(object):
         else:
             border_col = (50, 50, 100)
             fill_col = (100, 100, 50)
+        # To show components:
+        #if self.board.map.cells[row][col] is not None:
+        #    c = self.board.map.cells[row][col]
+        #    fill_col = ((c*5) % 256, (c*7) % 256, (c*11) % 256)
         pygame.draw.rect(self.display, border_col, pygame.Rect(x1, y1, w, h), 1)
         pygame.draw.rect(self.display, fill_col, pygame.Rect(x1+1, y1+1, w-2, h-2))
 
@@ -368,7 +434,9 @@ class Window(object):
         
         # Draw game summary info
         text_col = (255, 255, 255)
-        text = self.font.render("Complete %d/%d" % (self.board.zero_nodes, self.board.num_nodes), False, text_col)
+        text = self.font.render("Complete %d/%d; %d components, %d cyclic" %
+                (self.board.zero_nodes, self.board.num_nodes, len(self.board.map.components), len([x for x in self.board.map.components if x])),
+                False, text_col)
         self.display.blit(text, (0, 0))
 
     
@@ -457,6 +525,8 @@ class Control(object):
         
         self.board.draw_line(x1,y1, x2,y2, thickness)
         
+        self.board.map.update()
+        
         return True
 
 
@@ -469,6 +539,7 @@ def main(args=None):
     # Create a board (and unsolve it), a window, and a controller.
     board = Board()
     board.unsolve()
+    board.map = ComponentsMap(board)
     window = Window(board)
     control = Control(board, window)
 
@@ -489,6 +560,7 @@ def main(args=None):
             elif ev.key == pygame.K_r:
                 board = Board()
                 board.unsolve()
+                board.map = ComponentsMap(board)
                 window = Window(board)
                 control = Control(board, window)
         # Click to build a bridge on the current spot.
