@@ -57,12 +57,12 @@ public int fixsqrt(int x)
     return y;
 }
 
-int complexplus(int a, int b, int c, int d)
+(int, int) complexplus(int a, int b, int c, int d)
 {
     return (a + c, b + d);
 }
 
-int complextimes(int a, int b, int c, int d)
+(int, int) complextimes(int a, int b, int c, int d)
 {
     return (fixtimes(a, c) - fixtimes(b, d), fixtimes(a, d) + fixtimes(b, c));
 }
