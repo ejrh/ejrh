@@ -434,9 +434,14 @@ class Window(object):
         
         # Draw game summary info
         text_col = (255, 255, 255)
-        text = self.font.render("Complete %d/%d; %d components, %d cyclic" %
-                (self.board.zero_nodes, self.board.num_nodes, len(self.board.map.components), len([x for x in self.board.map.components if x])),
-                False, text_col)
+        num_comps = len(self.board.map.components)
+        num_cycles = len([x for x in self.board.map.components if x])
+        if self.board.zero_nodes == self.board.num_nodes and num_comps == 1 and num_cycles == 0:
+            s = "Won!"
+        else:
+            s = ("Complete %d/%d; %d components, %d cyclic" %
+                    (self.board.zero_nodes, self.board.num_nodes, num_comps, num_cycles))
+        text = self.font.render(s, False, text_col)
         self.display.blit(text, (0, 0))
 
     
