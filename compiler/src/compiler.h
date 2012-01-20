@@ -14,7 +14,7 @@ enum NODE_TYPE
     NULL_NODE_TYPE = 0,
 #define BASE_TYPE(n, s, p) n,
 #define NODE_TYPE(n, s, p) n,
-#include "types.h"
+#include "types.inc"
 #undef BASE_TYPE
 #undef NODE_TYPE
     NUM_NODE_TYPES
@@ -226,7 +226,7 @@ extern void register_node_types(void);
 
 #define BASE_TYPE(n, s, p) extern s *CAST_TO_##s(void *ptr);
 #define NODE_TYPE(n, s, p)
-#include "types.h"
+#include "types.inc"
 #undef BASE_TYPE
 #undef NODE_TYPE
 

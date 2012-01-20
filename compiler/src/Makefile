@@ -9,7 +9,7 @@ CFLAGS = -g -Wall -DGC_DEBUG -rdynamic
 YACC = bison -d -r all
 
 OBJ=$(filter-out grammar.tab.o, $(patsubst %.c, %.o, $(wildcard *.c))) grammar.tab.o
-HEADERS=grammar.tab.h lex.h compiler.h types.h
+HEADERS=grammar.tab.h lex.h compiler.h types.inc
 
 all: grammar.tab.h ecc
 

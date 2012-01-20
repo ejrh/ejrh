@@ -92,7 +92,7 @@ void register_node_types(void)
 {
     #define BASE_TYPE(n, s, p) tree_register_node_type(n, #n, sizeof(s), p);
     #define NODE_TYPE(n, s, p) tree_register_node_type(n, #n, sizeof(s), p);
-    #include "types.h"
+    #include "types.inc"
     #undef BASE_TYPE
     #undef NODE_TYPE
 
@@ -107,6 +107,6 @@ void register_node_types(void)
 
 #define BASE_TYPE(n, s, p) s *CAST_TO_##s(void *ptr) { if (!tree_check_type(ptr, n)) error("Invalid cast of type %d to %d!", ((NODE *) ptr)->type, n); return (s *) ptr; }
 #define NODE_TYPE(n, s, p)
-#include "types.h"
+#include "types.inc"
 #undef BASE_TYPE
 #undef NODE_TYPE
