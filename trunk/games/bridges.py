@@ -300,7 +300,7 @@ class ComponentsMap(object):
         for i0 in range(self.size):
             i = (i0 + offset) % self.size
             for j in range(self.size):
-                if self.board.cells[i][j] != ' ' and self.cells[i][j] is None:
+                if type(self.board.cells[i][j]) is int and self.cells[i][j] is None:
                     colour = len(self.components)
                     cyclic = self.search(j, i, colour)
                     self.components.append(cyclic)
