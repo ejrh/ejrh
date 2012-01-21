@@ -183,7 +183,7 @@ class Backup(object):
                 
             if s != size:
                 self.notifier.warning('Unable to reuse from manifest due to size (expected %d, was %d): %s' % (s, size, link_path))
-                size_list.push(n)
+                size_list.append(n)
                 n = None
             else:
                 break
