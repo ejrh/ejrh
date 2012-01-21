@@ -39,6 +39,7 @@ import struct
 import hashlib
 import win32file
 import winioctlcon
+import pywintypes
 
 
 BUFFER_SIZE = 1024*1024
@@ -290,8 +291,11 @@ class Backup(object):
             return
         
         if self.is_reusable(item_path):
-            self.reuse_item(item_path)
-            return
+            try:
+                self.reuse_item(item_path)
+                return
+            except pywintypes.error:
+                pass
         
         source_path = os.path.join(self.source, item_path)
         if os.path.isfile(source_path):
