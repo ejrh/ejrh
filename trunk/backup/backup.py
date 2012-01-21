@@ -182,7 +182,7 @@ class Backup(object):
                 continue
                 
             if s != size:
-                self.notifier.warning('Unable to reuse from manifest due to size (expected %d, was %d): %s' % n,  size, s)
+                self.notifier.warning('Unable to reuse from manifest due to size (expected %d, was %d): %s' (% n,  size, s))
                 size_list.push(n)
                 n = None
             else:
