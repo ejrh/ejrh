@@ -38,10 +38,10 @@ class Board(object):
             self.cells.append(row)
 
         # A list of existing nodes, with a single seed node in it.
-        nodes = []
+        self.nodes = []
         x, y = random.randrange(size), random.randrange(size)
         self.cells[y][x] = 0
-        nodes.append((x,y))
+        self.nodes.append((x,y))
         num_nodes -= 1
 
         dirs = [(0,-1), (0,1), (-1,0), (1, 0)]
@@ -53,7 +53,7 @@ class Board(object):
                 break
             
             # Pick a random node to start from, and a random direction.
-            x1, y1 = random.choice(nodes)
+            x1, y1 = random.choice(self.nodes)
             dx, dy = random.choice(dirs)
             
             # Find the maximum empty extent in that direction.
@@ -113,14 +113,14 @@ class Board(object):
             x2 = x1 + dx*n
             y2 = y1 + dy*n
             self.cells[y2][x2] = w
-            nodes.append((x2,y2))
+            self.nodes.append((x2,y2))
             num_nodes -= 1
             
             # Reset tries_left for the next node to add.
             tries_left = 100
         
         # Finally set some board information
-        self.num_nodes = len(nodes)
+        self.num_nodes = len(self.nodes)
         self.zero_nodes = 0
 
     def unsolve(self):
@@ -190,6 +190,15 @@ class Board(object):
         """Is the coordinate (x,y) on the board?"""
         return x >= 0 and y >= 0 and x < self.size and y < self.size
     
+    def get_thickness(self, x, y):
+        """Return the current bridge thickness at a point."""
+        if self.cells[y][x] in ['|', '-']:
+            return 1
+        elif self.cells[y][x] in ['H', '=']:
+            return 2
+        else:
+            return 0
+    
     def draw_line(self, x1, y1, x2, y2, thickness):
         """Draw a bridge between two nodes, of the given thickness.
         If the thickness is 0, a bridge will be erased.  1 and 2 correspond
@@ -202,6 +211,7 @@ class Board(object):
         a double bridge is removed.
         """
         if x1 == x2:
+            y1, y2 = sorted([y1, y2])
             dx, dy = 0, 1
             k = y2-y1
             if thickness == 0:
@@ -214,6 +224,7 @@ class Board(object):
                 inc = -1
                 c = 'H'
         else:
+            x1, x2 = sorted([x1, x2])
             dx, dy = 1, 0
             k = x2-x1
             if thickness == 0:
@@ -508,12 +519,8 @@ class Control(object):
         # Otherwise look at current tile's bridge state to see what kind of
         # bridge to build.
         tx, ty = self.window.current_tile
-        if self.board.cells[ty][tx] == ' ':
-            thickness = 1
-        elif self.board.cells[ty][tx] in ['|', '-']:
-            thickness = 2
-        else:
-            thickness = 0
+        thickness = (self.board.get_thickness(tx, ty) + 1) % 3
+        if thickness == 0:
             # If erasing a bridge, alternate the default direction.
             self.toggle_dir = not self.toggle_dir
         
@@ -533,6 +540,73 @@ class Control(object):
         self.board.map.update()
         
         return True
+
+
+class Solver(object):
+    """An AI solver for the bridges game.  On each invocation, attempts to
+    build a single bridge, using various rules.  Most of these rules are based
+    on the pigeonhole principal.  Every node has four bridges slots coming
+    to it; each slot can have a bridge thickness of 0, 1 or 2.
+    
+    Some examples:
+    
+    1 -- 1   this edge is 
+    """
+    
+    def __init__(self, board):
+        self.board = board
+    
+    def solve(self):
+        """Attempt to make progress in solving the board."""
+        for x,y in self.board.nodes:
+            if self.board.cells[y][x] != 0:
+                if self.solve_node(x, y):
+                    break
+    
+    def solve_node(self, x, y):
+        """Attempt to partially solve a node.  Returns True if some progress
+        was made."""
+        slots = self.find_slots(x, y)
+        
+        # For each slot, if the maximum capacity of the other slots is not
+        # enough to satisfy the remaining charge on the node, then this slot
+        # must be incremented (unless it has 0 capacity itself, in which case
+        # something has gone wrong).
+        nval = self.board.cells[y][x]
+        tval = sum([s[3] for s in slots])
+        
+        for tx,ty,thickness,m in slots:
+            if tval - m < nval:
+                # Increment this slot's bridge and return
+                self.board.draw_line(x,y, tx,ty, thickness + 1)
+                self.board.map.update()
+                #print 'Build bridge from %d,%d to %d,%d of thickness %d' % (x,y, tx,ty, thickness+1)
+                return True
+        
+        return False
+    
+    def find_slots(self, x, y):
+        """Find the possible additional values for all four slots for this
+        node.  Returns a list of tuples (tx, ty, thickness, max), which are
+        the target node, current bridge thickness, and maximum additional
+        value for each slot.  The maximum is the lesser of the target node's
+        remaining charge, or 2 minus the current bridge thickness, or 0 if the
+        slot does not lead to another node or is obstructed by a bridge."""
+        
+        slots = []
+        dirs = [(0,-1), (0,1), (-1,0), (1, 0)]
+        for dx,dy in dirs:
+            r = self.board.find_node(x, y, dx, dy)
+            if r is None:
+                continue
+            tx,ty = r
+            tval = self.board.cells[ty][tx]
+            thickness = self.board.get_thickness(x + dx, y + dy)
+            bval = 2 - thickness
+            m = min(tval, bval)
+            if m > 0:
+                slots.append((tx, ty, thickness, m))
+        return slots
 
 
 def main(args=None):
@@ -568,6 +642,9 @@ def main(args=None):
                 board.map = ComponentsMap(board)
                 window = Window(board)
                 control = Control(board, window)
+            elif ev.key == pygame.K_s:
+                Solver(board).solve()
+                redraw = True
         # Click to build a bridge on the current spot.
         if ev.type == pygame.MOUSEBUTTONDOWN:
             # Get the mouse coordinates and pass to the controller.  Set the
