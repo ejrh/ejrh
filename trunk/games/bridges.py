@@ -628,6 +628,8 @@ def main(args=None):
     
     image_num = 0
     
+    auto = False
+    
     while True:
         redraw = False
         ev = pygame.event.wait()
@@ -645,6 +647,8 @@ def main(args=None):
             elif ev.key == pygame.K_s:
                 Solver(board).solve()
                 redraw = True
+            elif ev.key == pygame.K_a:
+                auto = not auto
         # Click to build a bridge on the current spot.
         if ev.type == pygame.MOUSEBUTTONDOWN:
             # Get the mouse coordinates and pass to the controller.  Set the
@@ -653,6 +657,10 @@ def main(args=None):
             redraw = control.click(mx, my)
         elif ev.type == pygame.USEREVENT+1:
             pass
+        
+        if auto:
+            Solver(board).solve()
+            redraw = True
         
         # If the controller indicated we need to redraw, or we got a timer
         # event, then set the redraw flag.
