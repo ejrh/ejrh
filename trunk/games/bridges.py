@@ -546,22 +546,25 @@ class Solver(object):
     """An AI solver for the bridges game.  On each invocation, attempts to
     build a single bridge, using various rules.  Most of these rules are based
     on the pigeonhole principal.  Every node has four bridges slots coming
-    to it; each slot can have a bridge thickness of 0, 1 or 2.
-    
-    Some examples:
-    
-    1 -- 1   this edge is 
-    """
+    to it; each slot can have a bridge thickness of 0, 1 or 2."""
     
     def __init__(self, board):
         self.board = board
+        self.next_node = 0
     
     def solve(self):
         """Attempt to make progress in solving the board."""
-        for x,y in self.board.nodes:
+        for i in range(len(self.board.nodes)):
+            node_num = self.next_node % len(self.board.nodes)
+            x,y = self.board.nodes[node_num]
             if self.board.cells[y][x] != 0:
                 if self.solve_node(x, y):
-                    break
+                    return True
+            self.next_node += 1
+        if self.next_node >= self.board.nodes:
+            self.next_node = 0
+        
+        return False
     
     def solve_node(self, x, y):
         """Attempt to partially solve a node.  Returns True if some progress
@@ -621,6 +624,7 @@ def main(args=None):
     board.map = ComponentsMap(board)
     window = Window(board)
     control = Control(board, window)
+    solver = Solver(board)
 
     # A user event fires every 500ms to redraw the board, just in case
     # nothing else fires to cause it to be.
@@ -644,9 +648,10 @@ def main(args=None):
                 board.map = ComponentsMap(board)
                 window = Window(board)
                 control = Control(board, window)
+                solver = Solver(board)
             elif ev.key == pygame.K_s:
-                Solver(board).solve()
-                redraw = True
+                if solver.solve():
+                    redraw = True
             elif ev.key == pygame.K_a:
                 auto = not auto
         # Click to build a bridge on the current spot.
@@ -659,8 +664,8 @@ def main(args=None):
             pass
         
         if auto:
-            Solver(board).solve()
-            redraw = True
+            if solver.solve():
+                redraw = True
         
         # If the controller indicated we need to redraw, or we got a timer
         # event, then set the redraw flag.
