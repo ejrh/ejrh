@@ -174,7 +174,7 @@ static void emit_comment(NODE *vertex, void *data)
     FUNCTION *func = data;
     GRAPH *graph = func->graph;
     int label = (int) get_from_hash(graph->labels, vertex, sizeof(void *));
-    printf("#%d ", label);
+    printf("#%d (line %d) ", label, CAST_TO_AST(vertex)->source_line);
     print_expression(vertex, NULL);
     printf("\n");
 }
