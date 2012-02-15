@@ -121,7 +121,7 @@ int is_inlinable(FUNCTION *func)
 }
 
 
-static void rename_variables(MODULE *module, NODE *node, int base)
+static void rename_variables(MODULE *module, FUNCTION *func, NODE *node, int base)
 {
     if (!node)
         return;
@@ -135,12 +135,16 @@ static void rename_variables(MODULE *module, NODE *node, int base)
         char *str = add_string(module, next_name, strlen(next_name));
         
         var->name = str;
+        
+        var->decl = get_from_hash(func->table, str, strlen(str));
+        if (!var->decl)
+            error("Couldn't find new declaration of inlined variable %s!\n", var->name);
     }
     else
     {
         int i;
         for (i = 0; i < tree_num_children(node); i++)
-            rename_variables(module, tree_get_child(node, i), base);
+            rename_variables(module, func, tree_get_child(node, i), base);
     }
 }
 
@@ -174,10 +178,10 @@ static int analyse_vertex(MODULE *module, FUNCTION *func, NODE *vertex)
     NODE *exit = tree_get_child(graph, base+1);
     
     EXPRESSION *in_tuple = get_input_tuple(called_func);
-    rename_variables(module, CAST_TO_NODE(in_tuple), base);
+    rename_variables(module, func, CAST_TO_NODE(in_tuple), base);
     int i;
     for (i = base; i < tree_num_children(graph); i++)
-        rename_variables(module, tree_get_child(graph, i), base);
+        rename_variables(module, func, tree_get_child(graph, i), base);
     
     /* The entry is replaced with an assignment of the call's parameters into the called function's arguments. */
     EXPRESSION *args = tree_get_child(expr, 1);
