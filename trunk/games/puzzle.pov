@@ -1,6 +1,7 @@
 #include "colors.inc"
 #include "skies.inc"
 #include "woods.inc"
+#include "transforms.inc"
 
 
 
@@ -236,6 +237,86 @@ Piece(
     texture { T_Wood10 rotate x*90 }
 }
 
+#declare Path1 = spline {
+   linear_spline
+   
+   -1, <0, 0, -5>,
+   
+   4, <0, 0, -5>,
+   5, <0, 0, 0>,
+   
+   7, <0, 0, 0>,
+}
+
+#declare Path2 = spline {
+   linear_spline
+   
+   -1, <0, 5, 0>,
+   
+   0, <0, 5, 0>,
+   1, <0, 0, 0>,
+   
+   2, <0, 0, 0>,
+}
+
+#declare Path3 = spline {
+   linear_spline
+   
+   -1, <0, 5, 4>,
+   
+   1, <0, 5, 4>,
+   3, <0, 5, 0>,
+   4, <0, 0, 0>,
+   
+   5, <0, 0, 0>,
+}
+
+#declare Path4 = spline {
+   linear_spline
+   
+   -1, <0, 0, 5>,
+   
+   1, <0, 0, 5>,
+   2, <0, 0, 0>,
+   
+   3, <0, 0, 0>,
+}
+
+#declare Path5 = spline {
+   linear_spline
+   
+   -1, <0, 0, 0>,
+   
+   0, <0, 0, 0>,
+   1, <0, 0, 0>,
+   
+   2, <0, 0, 0>,
+}
+
+#declare Path6 = spline {
+   linear_spline
+   
+   -1, <5, 0, 0>,
+   
+   2, <5, 0, 0>,
+   3, <0, 0, 0>,
+   
+   4, <0, 0, 0>,
+}
+
+#declare Path7 = spline {
+   linear_spline
+   
+   -1, <5, 0, 4>,
+   
+   3, <5, 0, 4>,
+   5, <5, 0, 0>,
+   6, <0, 0, 0>,
+   
+   7, <0, 0, 0>,
+}
+
+
 union {
     cylinder { <0,0,0>, <3,0,0>, 0.01 pigment { White } }
     cylinder { <0,0,0>, <0,3,0>, 0.01 pigment { White } }
@@ -247,13 +328,13 @@ union {
     cylinder { <0,0,3>, <3,0,3>, 0.01 pigment { White } }
     cylinder { <0,0,3>, <0,3,3>, 0.01 pigment { White } }
     
-    object { Piece1 translate <0,0,-5> }
-    object { Piece2 translate <0,5,0> }
-    object { Piece3 translate <0,5,4> }
-    object { Piece4 translate <0,0,5> }
-    object { Piece5 }
-    object { Piece6 translate <5,0,0> }
-    object { Piece7 translate <5,0,4> }
+    object { Piece1 Spline_Trans(Path1, clock*6, y, 0, 0) }
+    object { Piece2 Spline_Trans(Path2, clock*6, y, 0, 0) }
+    object { Piece3 Spline_Trans(Path3, clock*6, y, 0, 0) }
+    object { Piece4 Spline_Trans(Path4, clock*6, y, 0, 0) }
+    object { Piece5 Spline_Trans(Path5, clock*6, y, 0, 0) }
+    object { Piece6 Spline_Trans(Path6, clock*6, y, 0, 0) }
+    object { Piece7 Spline_Trans(Path7, clock*6, y, 0, 0) }
     
     translate -<3,3,3>    
 }
