@@ -1,0 +1,47 @@
+/*
+ * Axioms from predicate calculus
+ */
+ 
+/*
+ * Notes on language:
+ *
+ * Comments can be multi-line C-style comments, like this one,
+ * or single line C++-style comments, which start with // and end at
+ * the end of the line.
+ *
+ * p => q creates a rule that transforms p into q.
+ * p <=> q creates two rules, p => q and q => p (it's just shorthand).
+ *
+ * & | ~ are and, or and not.  -> is implies.
+ *
+ * Parantheses ( ) indicate grouping to the parser and are not
+ * included afterwards.
+ */
+
+// Commutative Laws
+
+commute_and: a & b <=> b & a;
+commute_or:  a | b <=> b | a;
+
+// Associative Laws
+
+assoc_and: (a & b) & c <=> a & (b & c);
+assoc_or:  (a | b) | c <=> a | (b | c);
+
+// Distributive Laws
+
+distrib_and: a & (b | c) <=> (a & b) | (a & c);
+distrib_or:  a | (b & c) <=> (a | b) & (a | c);
+
+// De Morgan's Laws
+
+demorgan_and: ~(a & b) <=> (~a) | (~b);
+demorgan_or:  ~(a | b) <=> (~a) & (~b);
+
+// Implication
+
+implies: a -> b => b | (~a);    // TODO: may possibly be <=>.
+
+// Double negation
+
+double_negation: ~(~a) <=> a;

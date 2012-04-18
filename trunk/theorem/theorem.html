@@ -1,0 +1,374 @@
+<html>
+<head>
+    <title>Ideas on Mechanical Theorem Proving</title>
+</head>
+
+<body>
+    <h1>Ideas on Mechanical Theorem Proving</h1>
+    <address>Edmund Horner, c. Monday 14 April 2003.</address>
+    
+    <h2>Confession</h2>
+    
+    <p>
+        (What I'm actually talking here is only very basic &quot;theorem
+        proving&quot;.  It is probably better described as parse tree
+        find-and-replace.)
+    </p>
+    <p>
+        The goal with these ideas is to write a program that does things
+        similar to theorem proving, i.e. substitues parse trees for
+        equivalent parse trees.  Some points about the current program:
+    </p>
+    
+    <ul>
+        <li>
+            Written in C, though a higher-level language would have been
+            a lot wiser (and less fun).  Also uses a YACC (Yet Another Compiler
+            Compiler) grammar.  Has lots of memory leaks.
+        </li>
+        
+        <li>
+            Fundamental data structure is a TREE.  Logical statements are
+            represented as fairly simple trees.
+        </li>
+        
+        <li>
+            Rules (or axioms) are also represented as trees.  One rule can
+            be combined with one tree to create another tree.
+        </li>
+        
+        <li>
+            The first milestone for the program is to read statements and
+            rules from a text file into trees; and to have methods for
+            combining rules with trees; and to display trees (nicely).
+        </li>
+        
+        <li>
+            It doesn't matter if it picks rules at random and generates
+            useless output.  But the output has to be correct.
+        </li>
+    </ul>
+    
+    <h2>Language</h2>
+    
+    <p>
+        Here is an abridged version of the grammar:
+    </p>
+    
+    <pre>
+    file:
+        empty
+        | rule
+        | file rule
+        | expression
+        ;
+        
+    rule:
+        NAME COLON expression INTERCHANGES expression SEMI_COLON
+        | NAME COLON expression BECOMES expression SEMI_COLON
+        | BINARY NAME SEMI_COLON
+        | POST NAME SEMI_COLON
+        | PRE NAME SEMI_COLON
+        | error SEMI_COLON
+        ;
+        
+    expression:
+        expression IMPLIES expression
+        | expression EQUIVALENT_TO expression
+        | expression CONTRADICTS expression
+        | expression OR expression
+        | expression AND expression
+        | NOT expression
+        | FOR_ALL variable expression
+        | EXISTS variable expression
+        | variable
+        | expression BIN_OPERATOR expression
+        | PRE_OPERATOR expression
+        | expression POST_OPERATOR
+        | L_PARAN expression R_PARAN
+        ;
+    
+    variable:
+        NAME
+        ;
+    </pre>
+    
+    <p>
+        An input file can contain many rules (axioms).  An example of
+        one rule, which shows that &quot;a &amp; b&quot; can be replaced with
+        &quot;b &amp; a&quot; for any subexpressions a and b, is:
+    </p>
+    
+    <pre>
+        commute_and: a &amp; b => b &amp; a;
+    </pre>
+    
+    <p>
+        New kinds of operator can be declared.  Declaring them is
+        necessary so that the parser can properly identify them as
+        binary (an operand on either side), post-operand, or pre-operand.
+    </p>
+    
+    <pre>
+        binary -;
+        post !;
+        factorial: a! => a * (a - 1)!
+    </pre>
+    
+    <h2>Application of Rules</h2>
+    
+    <p>
+        This is the core of the program.  The ApplyRule function must
+        return the correct expression given an expression, a rule,
+        and a point to apply the rule; or signify an inability to
+        do so.
+    </p>
+    <p>
+        Here are some algorithms for ApplyRule, and the subordinate
+        functions MatchRule, GenerateNewTree, and GenerateReplacementTree.
+        These algorithms in their current form probably do not satisfy all of
+        Donald Knuth's criteria (Finiteness, Definiteness, Input, Output,
+        Effectiveness), but they are still called algorithms.
+        
+    </p>
+    
+    <h3>Algorithm: ApplyRule(<var>expr</var>, <var>rule</var>,
+    <var>point</var>)</h3>
+    
+    <ol>
+        <li>
+            Preconditions: <var>expr</var> is an expression in tree form;
+            <var>rule</var> is a rule in tree form (each side of the tree is
+            an expression, and the root of the tree is the special
+            <strong>BECOMES</strong> operation); <var>point</var> is
+            a pointer to a subtree of <var>expr</var>.
+        </li>
+        <li>
+            Let <var>pattern</var> be the left side of <var>rule</var>.
+            Let <var>replacement</var> be the right side of <var>rule</var>.
+        </li>
+        <li>
+            Create a new table, <var>matches</var>.
+        </li>
+        <li>
+            Check that the rule can be applied at this point, and build
+            a table of names used in <var>point</var>:
+            MatchRule(<var>matches</var>, <var>point</var>,
+            <var>pattern</var>).
+        </li>
+        <li>
+            If MatchRule returns negatively, then the rule can't be applied.
+            Return.
+        </li>
+        <li>
+            Generate a new tree from <var>expr</var>, replacing <var>point</var>
+            with <var>replacement</var>, using the subtrees in the <var>matches</var>
+            table: GenerateNewTree(<var>matches</var>, <var>expr</var>,
+            <var>point</var>, <var>replacement</var>).
+        </li>
+        <li>
+            Postconditions: the algorithm returns the expression
+            <var>res</var> in tree form. <var>expr</var> and <var>rule</var>
+            are unchanged.
+        </li>
+    </ol>
+    
+    <h3>Algorithm: MatchRule(<var>matches</var>, <var>target</var>,
+    <var>pattern</var>)</h3>
+    
+    <p>
+        This function is recursive.  Its exit condition is <var>pattern</var>
+        being a name (and obviously having no children).
+    </p>
+    
+    <ol>
+        <li>
+            Preconditions: <var>matches</var> is a table inherited from
+            the caller, to which the function adds any names found;
+            <var>target</var> and <var>pattern</var> are trees representing
+            a subtree of the equation to change, and the corresponding
+            subtree of the rule.
+        </li>
+        <li>
+            If the root of <var>pattern</var> is a name <var>name</var>, then:
+            <ol>
+                <li>
+                    Look up <var>name</var> in <var>matches</var>.
+                </li>
+                <li>
+                    If the name wasn't found, then add <var>target</var>
+                    to the table, using the key <var>name</var>.
+                    Return positively.
+                </li>
+                <li>
+                    If the name was found, compare corresponding
+                    tree in the table with <var>target</var>.  If
+                    they match, then return positively.  Otherwise
+                    return negatively.
+                </li>
+            </ol>
+        </li>
+        <li>
+            If the root of <var>target</var> and the root of <var>pattern</var>
+            don't match, then the rule doesn't match.  Return negatively.
+        </li>
+        <li>
+            Let <var>left_target</var> and <var>left_pattern</var> be the left
+            sides of <var>target</var> and <var>pattern</var>.
+        </li>
+        <li>
+            If MatchRule(<var>matches</var>, <var>left_target</var>,
+            <var>left_pattern</var>) returns negatively, then also return
+            negatively.
+        </li>
+        <li>
+            Let <var>right_target</var> and <var>right_pattern</var> be the
+            right sides of <var>target</var> and <var>pattern</var>.
+        </li>
+        <li>
+            If MatchRule(<var>matches</var>, <var>right_target</var>,
+            <var>right_pattern</var>) returns negatively, then also return
+            negatively.
+        </li>
+        <li>
+            Postconditions: If the rule matches, then <var>matches</var> is a
+            table containing the subtrees in <var>point</var> that matched
+            with variable names in <var>rule</var>, indexed by that name (this
+            table will also contain names from other recursive invocations of
+            MatchRule); the function returns negatively.  If the rule doesn't
+            match, <var>matches</var> may or may not be changed and the function
+            returns negatively.
+        </li>
+    </ol>
+    
+    <h3>Algorithm: GenerateNewTree(<var>matches</var>, <var>expr</var>,
+    <var>point</var>, <var>replacement</var>)</h3></body>
+    
+    <p>
+        This function is recursive.
+    </p>
+    
+    <ol>
+        <li>
+            Preconditions
+        </li>
+        <li>
+            If <var>tree</var> is empty, return an empty tree.
+        </li>
+        <li>
+            If <var>expr</var> is <var>point</var>, then:
+            <ol>
+                <li>
+                    Let <var>tree</var> be the return vales of
+                    GenerateNewTree(<var>matches</var>, <var>replacement</var>).
+                </li>
+                <li>
+                    Return <var>tree</var>.
+                </li>
+            </ol>
+        </li>
+        <li>
+            If <var>expr</var> is not <var>point</var>, then:
+            <ol>
+                <li>
+                    Let <var>tree</var> be a new tree, with the same type
+                    as <var>expr</var>.
+                </li>
+                <li>
+                    Let <var>left_expr</var> be the
+                    left side of <var>expr</var>.
+                </li>
+                <li>
+                    Assign the output of GenerateNewTree(<var>matches</var>,
+                    <var>left_expr</var>, <var>point</var>, <var>replacement</var>)
+                    to the left side of <var>tree</var>.
+                </li>
+                <li>
+                    Let <var>right_expr</var> be the
+                    right side of <var>expr</var>.
+                </li>
+                <li>
+                    Assign the output of GenerateNewTree(<var>matches</var>,
+                    <var>right_expr</var>, <var>point</var>, <var>replacement</var>)
+                    to the right side of <var>tree</var>.
+                </li>
+                <li>
+                    Return <var>tree</var>.
+                </li>
+            </ol>
+        </li>
+        <li>
+            Postconditions: <var>tree</var> is the new version of <var>expr</var>
+            after substituting <var>replacement</var> using the names in
+            <var>matches</var>.
+        </li>
+    </ol>
+
+    <h3>Algorithm: GenerateReplacementTree(<var>matches</var>, <var>replacement</var>)</h3>
+    
+    <p>
+        This function is recursive.
+    </p>
+    
+    <ol>
+        <li>
+            Preconditions
+        </li>
+        <li>
+            Let <var>tree</var> be a new tree.
+        </li>
+        <li>
+            If <var>replacement</var> is a name, then:
+            <ol>
+                <li>
+                    Look up the name in <var>matches</var>.
+                </li>
+                <li>
+                    If the name wasn't found, <strong>something is horribly
+                    wrong</strong>.  Terminate.
+                </li>
+                <li>
+                    Otherwise, assign the tree found in <var>matches</var>
+                    to <var>tree</var>.
+                </li>
+            </ol>
+        </li>
+        <li>
+            If <var>replacement</var> is not a name, then:
+            <ol>
+                <li>
+                    Let <var>tree</var> have the same type as
+                    <var>replacement<var>.
+                </li>
+                <li>
+                    Let <var>left_repl</var> be the left side of
+                    <var>replacement</var>..
+                </li>
+                <li>
+                    Assign the output of GenerateReplacementTree(<var>matches</var>,
+                    <var>left_repl</var>) to the left side of <var>tree</var>.
+                </li>
+                <li>
+                    Let <var>right_repl</var> be the right side of
+                    <var>replacement</var>..
+                </li>
+                <li>
+                    Assign the output of GenerateReplacementTree(<var>matches</var>,
+                    <var>right_repl</var>) to the right side of <var>tree</var>.
+                </li>
+            </ol>
+        </li>
+        <li>
+            Return <var>tree</var>.
+        </li>
+        <li>
+            Postconditions
+        </li>
+    </ol>
+
+    <h2>Examples</h2>
+    
+    
+    
+</body>
+</html>

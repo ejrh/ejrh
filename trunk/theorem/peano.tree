@@ -1,0 +1,37 @@
+/*
+ * Peano arithmetic axioms.
+ */
+ 
+binary =;
+binary !=;
+function p;
+
+constant 0;   // peano_1
+post plus1;   // peano_2
+peano_3: y = x plus1 => y != 0
+peano_4: a != b <=> a plus1 != b plus1
+peano_5: p(0) & (P(x) -> P(x plus1)) => P(y)
+
+/*
+ * Some tests of the grammar which don't actually belong in this file,
+ * but oh well.
+ */
+ 
+// Some operators
+
+binary +;
+binary -;
+pre -;   // TODO: Doesn't work, lexer returns BIN_OPERATOR for -.
+binary *;
+binary /;
+post !;
+
+// Addition rules
+
+add_commut: a + b <=> b + a;
+add_assoc: (a + b) + c <=> a + (b + c);
+
+// Definition of factorial
+
+factorial_1: 0! <=> 1;
+factorial_2: a! <=> a * (a-1)!;
