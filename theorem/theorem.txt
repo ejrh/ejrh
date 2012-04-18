@@ -1,0 +1,40 @@
+IDEAS ON THEOREM PROVING
+Edmund Horner, 27 March 2003
+
+A proposition is a string of symbols.  E.g. "n*(n-1) = n^2 - n".
+
+A rule is a method of transforming a to b iff a -> b.  E.g. "x*(y+z) -> x*y + x*z".
+
+A table of rules exists.
+
+A graph exists, with each vertex a proposition.  A directed edge exists from a to b iff there is a
+transformation from a to b using exactly one rule from the rule table.
+
+RULES
+
+K is a field { ..., O, I, *, + }.
+a, ..., z are scalars from K.
+
+a + O = a
+a + -(O) = a
+a * O = O
+(a ELEMENT N) -> (a ELEMENT Z)
+(a ELEMENT Z) -> (a ELEMENT Q)
+(a ELEMENT Q) -> (a ELEMENT R)
+(a ELEMENT R) -> (a ELEMENT C)
+
+is_even(x) = EXISTS(n,(n ELEMENT Z) AND (2*n = x))
+is_odd(x) = (n ELEMENT Z) AND NOT is_even(x)
+
+
+
+(n ELEMENT_OF Z) -> (EXISTS k (k ELEMENT_OF Z) AND (2*k = n^2)))
+
+
+
+
+
+EXISTS k (2*k = x^3 + x):
+
+x^3 + x = x*(x^2 + 1)	
+(EXISTS k (2*k = x)) OR (EXISTS k (2*k = x^2 + 1))
