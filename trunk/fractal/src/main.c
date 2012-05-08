@@ -104,6 +104,8 @@ typedef struct OPTIONS
 
     int benchmark;
     int benchmark_loops;
+    
+    int show_help;
 } OPTIONS;
 
 
@@ -264,6 +266,8 @@ static OPTIONS *create_options(void)
     
     options->benchmark = 0;
     options->benchmark_loops = 5;
+    
+    options->show_help = 0;
 
     return options;
 }
@@ -355,12 +359,30 @@ static void parse_args(int argc, char *argv[], OPTIONS *options)
             }
             options->benchmark_loops = atoi(argv[i]);
         }
+        else if (strcmp(argv[i], "--help") == 0)
+        {
+            options->show_help = 1;
+        }
         else
         {
             fprintf(stderr, "Unrecognised command: %s\n", argv[i]);
-            exit(1);
+            options->show_help = 1;
         }
     }
+}
+
+
+void show_help(void)
+{
+    printf("Command line:    fractal [options...]\n");
+    printf("    /s                  enable Windows screensaver mode\n");
+    printf("    --auto              enable auto mode\n");
+    printf("    --benchmark         perform benchmark\n");
+    printf("    --mode MODENAME     set initial drawing mode\n");
+    printf("    --mfunc MFUNCNAME   set initial mfunc\n");
+    printf("    --depth DEPTH       set initial depth\n");
+    printf("    --loops LOOPS       specify number of loops for benchmark\n");
+    printf("    --help              show this help message\n");
 }
 
 
@@ -460,6 +482,11 @@ int main(int argc, char *argv[])
     options = create_options();
 
     parse_args(argc, argv, options);
+    if (options->show_help)
+    {
+        show_help();
+        exit(0);
+    }
     
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
         error();
