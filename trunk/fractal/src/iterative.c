@@ -28,6 +28,7 @@ typedef struct DRAWING
     int i, j;
     int quota;
     int iteration_depth;
+    int last_depth;
 } DRAWING;
 
 
@@ -71,6 +72,7 @@ DRAWING *iterative_create(WINDOW *window, FRACTAL *fractal, GET_POINT get_point,
         return NULL;
     }
     drawing->iteration_depth = ITERATION_DEPTH_START;
+    drawing->last_depth = 0;
     
     for (i = 0; i < drawing->width * drawing->height; i++)
     {
@@ -112,6 +114,7 @@ restart:
         
         drawing->i = 0;
         drawing->j = 0;
+        drawing->last_depth = drawing->iteration_depth;
         drawing->iteration_depth *= ITERATION_DEPTH_FACTOR;
         if (drawing->iteration_depth > drawing->window->depth)
             drawing->iteration_depth = drawing->window->depth;
@@ -135,7 +138,9 @@ restart:
         goto restart;
     }
     
-    *max_iterations = drawing->iteration_depth;
+    *max_iterations = drawing->iteration_depth - drawing->last_depth;
+    *zx = drawing->point_x[drawing->y_slots[slot]*drawing->width + drawing->x_slots[slot]];
+    *zy = drawing->point_y[drawing->y_slots[slot]*drawing->width + drawing->x_slots[slot]];
     
     return 1;
 }
