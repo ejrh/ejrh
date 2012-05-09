@@ -115,7 +115,7 @@ restart:
         drawing->i = 0;
         drawing->j = 0;
         drawing->last_depth = drawing->iteration_depth;
-        drawing->iteration_depth *= ITERATION_DEPTH_FACTOR;
+        drawing->iteration_depth = (drawing->iteration_depth * ITERATION_DEPTH_FACTOR) + 1;        
         if (drawing->iteration_depth > drawing->window->depth)
             drawing->iteration_depth = drawing->window->depth;
     }
