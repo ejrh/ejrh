@@ -328,19 +328,19 @@ class Backup(object):
     def open_journal(self):
         journal_filename = os.path.join(self.target, JOURNAL_FILENAME)
         try:
-            self.journal_state = unpickle_file(journal_filename)
+            journal_state = unpickle_file(journal_filename)
         except IOError:
             self.notifier.notice('Journal state not found, starting anew')
-            self.journal_state = (None, None, {})
+            journal_state = (None, None, {})
         drive = os.path.splitdrive(self.source)[0]
         self.journal = Journal(drive)
-        self.journal.set_state(self.journal_state)
+        self.journal.set_state(journal_state)
         self.notifier.notice('Opened journal')
 
     def close_journal(self):
         journal_filename = os.path.join(self.target, JOURNAL_FILENAME)
-        self.journal_state = self.journal.get_state()
-        pickle_to_file(self.journal_state, journal_filename)
+        journal_state = self.journal.get_state()
+        pickle_to_file(journal_state, journal_filename)
         self.notifier.notice('Closed journal')
     
     def load_manifest(self):
