@@ -428,7 +428,8 @@ def make_piano_note(note, octave=0, duration=2, decay=0.99977):
 note_cache = {}
 
 def make_piano_melody(melody, duration=0.25):
-
+    duration_multiplier = 4
+    
     notes = melody.split()
     if notes == []:
         note = Silence(duration=duration)
@@ -444,10 +445,17 @@ def make_piano_melody(melody, duration=0.25):
                 note = Silence(duration=duration)
                 note_cache[(',', duration)] = note
         elif n == 'T<':
+            duration_multiplier /= 2.0
             duration *= 0.5
             continue
         elif n == 'T>':
+            duration_multiplier *= 2.0
             duration *= 2.0
+            continue
+        elif n[0] == 'T':
+            new_multiplier = float(n[1:])
+            duration *= (new_multiplier/duration_multiplier)
+            duration_multiplier = new_multiplier
             continue
         elif n == '+':
             offset -= SAMPLE_RATE*duration
