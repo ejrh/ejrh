@@ -13,6 +13,10 @@
 #endif
 
 
+#define PIXEL_COST 50
+#define QUOTA_SIZE 2500000
+
+
 typedef struct DRAWING
 {
     WINDOW *window;
@@ -26,6 +30,7 @@ typedef struct DRAWING
     int num_jobs;
     int num_pixels;
     int pixels_per_job;
+    int quota;
     
     int frame;
     int frame_offset;
@@ -110,7 +115,7 @@ DRAWING *parallel_create(WINDOW *window, FRACTAL *fractal, GET_POINT get_point, 
     
     drawing->num_jobs = omp_get_num_procs();
     drawing->num_pixels = drawing->width * drawing->height;
-    drawing->num_frames = 43;
+    drawing->num_frames = 211;
     drawing->pixels_per_job = (int) ceil((double) drawing->num_pixels / drawing->num_frames / drawing->num_jobs);
     
     drawing->frame_offset = 0;   //TODO use last frame?
@@ -174,6 +179,8 @@ void parallel_output_pixel(int slot, int remaining, double fx, double fy, BATON 
     }
     
     set_pixel(drawing->window, baton->x_slots[slot], baton->y_slots[slot], k, fx, fy);
+    if (baton->j == 0)
+        drawing->quota -= ((k == 0) ? drawing->window->depth : k) + PIXEL_COST;
 }
 
 
@@ -185,26 +192,30 @@ void parallel_update(DRAWING *drawing)
     
     memset(thread_done, 0, sizeof(thread_done));
 
-    //fprintf(stderr, "num_frames %d, frame_step %d, frame %d\n", drawing->num_frames, drawing->frame_step, drawing->frame);
-    if (drawing->frame_step > drawing->num_frames)
-        return;
-
-    #pragma omp parallel for
-    for (j = 0; j < drawing->num_jobs; j++)
+    drawing->quota = QUOTA_SIZE;
+    while (drawing->quota > 0)
     {
-        BATON baton;
-        baton.drawing = drawing;
-        baton.j = j;
-        baton.done = 0;
-        baton.i = 0;    
-        drawing->mfunc(parallel_allocate_slots, parallel_next_pixel, parallel_output_pixel, &baton);
-        thread_done[j] = baton.done;
-    }
-    pixels_done = old_pixels_done;
-    for (j = 0; j < drawing->num_jobs; j++)
-        pixels_done += thread_done[j];
+        //fprintf(stderr, "num_frames %d, frame_step %d, frame %d\n", drawing->num_frames, drawing->frame_step, drawing->frame);
+        if (drawing->frame_step > drawing->num_frames)
+            return;
 
-    next_frame(drawing);
+        #pragma omp parallel for
+        for (j = 0; j < drawing->num_jobs; j++)
+        {
+            BATON baton;
+            baton.drawing = drawing;
+            baton.j = j;
+            baton.done = 0;
+            baton.i = 0;    
+            drawing->mfunc(parallel_allocate_slots, parallel_next_pixel, parallel_output_pixel, &baton);
+            thread_done[j] = baton.done;
+        }
+        pixels_done = old_pixels_done;
+        for (j = 0; j < drawing->num_jobs; j++)
+            pixels_done += thread_done[j];
+
+        next_frame(drawing);
+    }
 }
 
 
