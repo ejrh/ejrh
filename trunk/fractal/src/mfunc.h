@@ -56,14 +56,6 @@ typedef int PIXEL_SOURCE(int slot, int *max_iterations, double *zx, double *zy, 
  */
 typedef void PIXEL_OUTPUT(int slot, int remaining, double fx, double fy, BATON *mfunc_baton);
 
-/** Direct Mandelbrot function, that works on one pixel at a time.
- * @param cx,cy Coordinates of pixel to work on.
- * @param max_iterations Maximum number of iterations before assuming pixel is inside the set.
- * @param fx,fy Pointers to where last calculated position will be output.
- * @return The number of iterations run, or 0 if the pixel was still in the set after max_iterations.
- */
-extern int mfunc_direct(double zx, double zy, double cx, double cy, int max_iterations, double *fx, double *fy);
-
 /** Mandelbrot loop function.  This function performs the same calculation as
  * mfunc, but has undergone a certain "inversion of control": it will call
  * the next_pixel callback to obtain a pixel coordinate pair to work on, and
@@ -81,6 +73,16 @@ extern int mfunc_direct(double zx, double zy, double cx, double cy, int max_iter
  * @param baton A drawing-mode specific baton that will be passed to callbacks.
  */
 typedef void MFUNC(ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton);
+
+/** Mandelbrot function for computing a single pixel directly.
+ *
+ * @param mfunc mfunc implementation to use.
+ * @param cx,cy Coordinates of pixel to work on.
+ * @param max_iterations Maximum number of iterations before assuming pixel is inside the set.
+ * @param fx,fy Pointers to where last calculated position will be output.
+ * @return The number of iterations run, or 0 if the pixel was still in the set after max_iterations.
+ */
+extern int mfunc_direct(MFUNC mfunc, double zx, double zy, double cx, double cy, int max_iterations, double *fx, double *fy);
 
 /** Single slot version of Mandelbrot loop function.
  * 
