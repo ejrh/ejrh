@@ -44,58 +44,52 @@ typedef long int FIXED;
 #define FROM_FIXED(x) ((x) / (double) FIXED_SCALE)
 
 
-int mfunc_direct_int(double zx, double zy, double cx, double cy, int max_iterations, double *fx, double *fy)
+void mfunc_loop_int(ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton)
 {
     int i = 0;
-    FIXED zr = TO_FIXED(zx), zi = TO_FIXED(zy);
-    FIXED zr2 = 0, zi2 = 0;
-
     FIXED boundary = TO_FIXED(2.0*2.0);
-
-    FIXED cx_fix = TO_FIXED(cx);
-    FIXED cy_fix = TO_FIXED(cy);
-
-    while (i < max_iterations && zr2 + zi2 < boundary)
+    FIXED zr, zi;
+    FIXED zr2 = boundary, zi2 = boundary;
+    FIXED cr, ci;
+    int done = 0;
+    
+    allocate_slots(1, baton);
+    
+    while (1)
     {
         FIXED t;
-
+        
+        /* Check if it's time to output a pixel and/or start a new one. */
+        if (i <= 0 || zr2 + zi2 > boundary)
+        {
+            double zx, zy, cx, cy;
+            
+            if (done != 0)
+            {
+                if (zr2 + zi2 <= boundary)
+                    output_pixel(0, 0, FROM_FIXED(zr), FROM_FIXED(zi), baton);
+                else
+                    output_pixel(0, i, FROM_FIXED(zr), FROM_FIXED(zi), baton);
+            }
+            
+            if (!next_pixel(0, &i, &zx, &zy, &cx, &cy, baton))
+                break;
+            
+            zr = TO_FIXED(zx);
+            zi = TO_FIXED(zy);
+            cr = TO_FIXED(cx);
+            ci = TO_FIXED(cy);
+            
+            done += 1;
+        }
+    
+        /* Do some work on the current pixel. */
         zr2 = FIXED_TIMES(zr, zr);
         zi2 = FIXED_TIMES(zi, zi);
         t = FIXED_TIMES(zr, zi);
-        zr = zr2 - zi2 + cx_fix;
-        zi = t + t + cy_fix;
+        zr = zr2 - zi2 + cr;
+        zi = t + t + ci;
 
-        i++;
-    }
-    *fx = FROM_FIXED(zr);
-    *fy = FROM_FIXED(zi);
-
-    if (zr2 + zi2 < boundary)
-        return 0;
-
-    return i;
-}
-
-
-void mfunc_loop_int(ALLOCATE_SLOTS allocate_slots, PIXEL_SOURCE next_pixel, PIXEL_OUTPUT output_pixel, BATON *baton)
-{
-    allocate_slots(1, baton);
-
-    while (1)
-    {
-        double zx, zy;
-        double px, py;
-        int k;
-        double fx, fy;
-        int max_iterations;
-
-        if (!next_pixel(0, &max_iterations, &zx, &zy, &px, &py, baton))
-            break;
-
-        k = mfunc_direct_int(zx, zy, px, py, max_iterations, &fx, &fy);
-
-        if (k == 0)
-            k = max_iterations;
-        output_pixel(0, max_iterations - k, fx, fy, baton);
+        i--;
     }
 }
