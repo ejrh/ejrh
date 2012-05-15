@@ -195,9 +195,10 @@ void parallel_update(DRAWING *drawing)
     drawing->quota = QUOTA_SIZE;
     while (drawing->quota > 0)
     {
-        //fprintf(stderr, "num_frames %d, frame_step %d, frame %d\n", drawing->num_frames, drawing->frame_step, drawing->frame);
         if (drawing->frame_step > drawing->num_frames)
-            return;
+        {
+            break;
+        }
 
         #pragma omp parallel for
         for (j = 0; j < drawing->num_jobs; j++)
@@ -208,14 +209,15 @@ void parallel_update(DRAWING *drawing)
             baton.done = 0;
             baton.i = 0;    
             drawing->mfunc(parallel_allocate_slots, parallel_next_pixel, parallel_output_pixel, &baton);
-            thread_done[j] = baton.done;
+            thread_done[j] += baton.done;
         }
-        pixels_done = old_pixels_done;
-        for (j = 0; j < drawing->num_jobs; j++)
-            pixels_done += thread_done[j];
 
         next_frame(drawing);
     }
+    
+    pixels_done = old_pixels_done;
+    for (j = 0; j < drawing->num_jobs; j++)
+        pixels_done += thread_done[j];
 }
 
 
