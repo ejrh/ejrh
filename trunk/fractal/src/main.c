@@ -177,6 +177,10 @@ void colourise(OPTIONS *options)
         {
             float val = (buffer[i*2*options->window.width + j*2] + buffer[i*2*options->window.width + j*2+1]
                     + buffer[(i*2+1)*options->window.width + j*2] + buffer[(i*2+1)*options->window.width + j*2+1]) / 4.0;
+            
+            if (val == 0.0)
+                continue;
+
             unsigned int c = map_colour(val, map, MAP_SIZE);
 
             SDL_Color col;
