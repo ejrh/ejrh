@@ -102,6 +102,7 @@ static void iterative_allocate_slots(int num_slots, BATON *baton)
 static int iterative_next_pixel(int slot, int *max_iterations, double *zx, double *zy, double *cx, double *cy, BATON *baton)
 {
     DRAWING *drawing = (DRAWING *) baton;
+    int pos;
     
     if (drawing->quota <= 0)
         return 0;
@@ -124,6 +125,7 @@ restart:
 
     drawing->x_slots[slot] = drawing->j;
     drawing->y_slots[slot] = drawing->i;
+    pos = drawing->i * drawing->width + drawing->j;
     
     drawing->j++;
 
@@ -133,14 +135,17 @@ restart:
         drawing->i++;
     }
 
-    if (drawing->done[drawing->y_slots[slot]*drawing->width + drawing->x_slots[slot]])
+    if (drawing->done[pos])
     {
         goto restart;
     }
     
     *max_iterations = drawing->iteration_depth - drawing->last_depth;
-    *zx = drawing->point_x[drawing->y_slots[slot]*drawing->width + drawing->x_slots[slot]];
-    *zy = drawing->point_y[drawing->y_slots[slot]*drawing->width + drawing->x_slots[slot]];
+    if (drawing->last_depth > 0)
+    {
+        *zx = drawing->point_x[pos];
+        *zy = drawing->point_y[pos];
+    }
     
     return 1;
 }
@@ -150,6 +155,7 @@ static void iterative_output_pixel(int slot, int remaining, double fx, double fy
 {
     DRAWING *drawing = (DRAWING *) baton;
     int k;
+    int pos = drawing->y_slots[slot] * drawing->width + drawing->x_slots[slot];
     
     if (remaining == 0)
     {
@@ -162,12 +168,12 @@ static void iterative_output_pixel(int slot, int remaining, double fx, double fy
     
     if (k == 0 && drawing->iteration_depth < drawing->window->depth)
     {
-        drawing->point_x[drawing->y_slots[slot] * drawing->width + drawing->x_slots[slot]] = fx;
-        drawing->point_y[drawing->y_slots[slot] * drawing->width + drawing->x_slots[slot]] = fy;
+        drawing->point_x[pos] = fx;
+        drawing->point_y[pos] = fy;
     }
     else
     {
-        drawing->done[drawing->y_slots[slot]*drawing->width + drawing->x_slots[slot]] = 1;
+        drawing->done[pos] = 1;
         set_pixel(drawing->window, drawing->x_slots[slot], drawing->y_slots[slot], k, fx, fy);
     }
     
