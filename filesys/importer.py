@@ -106,7 +106,8 @@ class Importer(object):
 
 
     def commit_if_necessary(self):
-        if self.db.altered and time.time() > self.db.transaction_age + self.commit_interval:
+        if ((self.db.altered and time.time() > self.db.transaction_age + self.commit_interval)
+                or (time.time() > self.db.transaction_age + self.commit_interval_max)):
             self.db.commit()
             self.begin()
             return True

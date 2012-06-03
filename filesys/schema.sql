@@ -232,6 +232,7 @@ CREATE INDEX deleted_ix_duplicate_of ON deleted (duplicate_of);
 CREATE TABLE config
 (
     commit_interval INTEGER DEFAULT 60,
+    commit_interval_max INTEGER DEFAULT 300,
     
     thumbnail_height INTEGER DEFAULT 100,
     thumbnail_width INTEGER DEFAULT 100,
