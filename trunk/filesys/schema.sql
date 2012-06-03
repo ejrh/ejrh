@@ -807,3 +807,16 @@ BEGIN
     END LOOP;
 END;
 $$;
+
+
+CREATE OR REPLACE FUNCTION all_file_in_dirs(INTEGER) RETURNS SETOF file_in_dir
+STABLE LANGUAGE 'sql'
+AS $$
+    WITH RECURSIVE w(file_id, dir_id) AS
+    (SELECT file_id, dir_id
+        FROM file_in_dir AS fid WHERE dir_id = $1
+        UNION ALL
+        SELECT fid.file_id, fid.dir_id
+        FROM file_in_dir AS fid JOIN w ON w.file_id = fid.dir_id)
+    SELECT file_id, dir_id FROM w;
+$$;
