@@ -603,10 +603,10 @@ class Importer(object):
 
 
 if __name__ == "__main__":
-    usage = """usage: %prog PATH [-h DB_HOST]"""
+    usage = """usage: %prog PATH [--host DB_HOST]"""
     desc = """Import a directory into the filesystem database."""
     parser = OptionParser(usage=usage, description=desc)
-    parser.add_option("-d", metavar="DB_HOST",
+    parser.add_option("--host", metavar="DB_HOST",
                       action="store", dest="db_host",
                       help="specify the host of the filesys database")
 
