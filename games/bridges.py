@@ -189,7 +189,29 @@ class Board(object):
     def in_range(self, x, y):
         """Is the coordinate (x,y) on the board?"""
         return x >= 0 and y >= 0 and x < self.size and y < self.size
-    
+
+    def get_line(self, x1, y1, x2, y2):
+        line = []
+        if x1 == x2:
+            if y2 > y1:
+                dx, dy = 0, 1
+                k = y2 - y1
+            else:
+                dx, dy = 0, -1
+                k = y1 - y2
+        else:
+            if x2 > x1:
+                dx, dy = 1, 0
+                k = x2 - x1
+            else:
+                dx, dy = -1, 0
+                k = x1 - x2
+        
+        for i in range(0,k):
+            line.append((x1+i*dx, y1+i*dy))
+        
+        return line
+        
     def get_thickness(self, x, y):
         """Return the current bridge thickness at a point."""
         if self.cells[y][x] in ['|', '-']:
@@ -210,10 +232,8 @@ class Board(object):
         a non-existent bridge is made single, a single bridge is doubled, and
         a double bridge is removed.
         """
+        line = self.get_line(x1, y1, x2, y2)
         if x1 == x2:
-            y1, y2 = sorted([y1, y2])
-            dx, dy = 0, 1
-            k = y2-y1
             if thickness == 0:
                 inc = 2
                 c = ' '
@@ -224,9 +244,6 @@ class Board(object):
                 inc = -1
                 c = 'H'
         else:
-            x1, x2 = sorted([x1, x2])
-            dx, dy = 1, 0
-            k = x2-x1
             if thickness == 0:
                 inc = 2
                 c = ' '
@@ -237,8 +254,9 @@ class Board(object):
                 inc = -1
                 c = '='
         
-        for i in range(1,k):
-            self.cells[y1+i*dy][x1+i*dx] = c
+        for i in range(1, len(line)):
+            x, y = line[i]
+            self.cells[y][x] = c
         
         # Adjust nodes at each end, and count of zero nodes
         if self.cells[y1][x1] == 0:
@@ -306,6 +324,8 @@ class ComponentsMap(object):
         """Analyse the board to find connected components and cycles."""
         
         self.erase()
+        self.cycles = []
+        self.paths = {}
 
         offset = random.randrange(self.size)
         for i0 in range(self.size):
@@ -316,12 +336,13 @@ class ComponentsMap(object):
                     cyclic = self.search(j, i, colour)
                     self.components.append(cyclic)
     
-    def search(self, x, y, colour, last_x=None, last_y=None):
+    def search(self, x, y, colour, last_x=None, last_y=None, path=[]):
         """Perform a depth-first-search of a component, starting from a node
         and traversing along its bridges, colouring it.  Returns True if the
         component was cyclic."""
         
         self.cells[y][x] = colour
+        self.paths[(x, y)] = path
         
         cyclic = False
         
@@ -336,12 +357,27 @@ class ComponentsMap(object):
                 new_x += dx
                 new_y += dy
             if self.cells[new_y][new_x] == colour:
+                self.found_cycle(x, y, new_x, new_y, path)                    
                 cyclic = True
             else:
-                if self.search(new_x, new_y, colour, new_x - dx, new_y - dy):
+                new_path = path + [(x, y)]
+                if self.search(new_x, new_y, colour, new_x - dx, new_y - dy, new_path):
                     cyclic = True
         
         return cyclic
+        
+    def found_cycle(self, x, y, new_x, new_y, path):
+        try:
+            # See if the cycle leads back up to the current path
+            i = path.index((new_x, new_y))
+            c = path[i:] + [(x, y)]
+            #print 'found self-path cycle', c
+        except ValueError:
+            # So the cycle must lead to another path
+            p1 = list(reversed(self.paths[(new_x, new_y)]))
+            c = p1 + path + [(new_x, new_y)]
+            #print 'found other-path cycle', c
+        self.cycles.append(c)
 
 
 class Window(object):
@@ -369,6 +405,10 @@ class Window(object):
         self.troll_face = pygame.transform.rotate(text, 90)
         
         self.current_tile = None
+        
+        self.troll_paths = []
+        
+        self.frame_num = 0
 
     def draw_tile(self, row, col):
         """Draw the tile at position (col,row)."""
@@ -401,20 +441,14 @@ class Window(object):
             else:
                 text_col = (255, 255, 255)
             
-            if self.board.cells[row][col]  < 0:
-                # If too many bridges at this node, a troll appears!
-                tx = x1 + w/2 - self.troll_face.get_width()/2
-                ty = y1 + h/2 - self.troll_face.get_height()/2
-                self.display.blit(self.troll_face, (tx + 2, ty))
-            else:            
-                # Draw the node value as centered as we can get.
-                text = self.font.render("%d" % self.board.cells[row][col], False, text_col)
-                tx = x1 + w/2 - text.get_width()/2
-                ty = y1 + h/2 - text.get_height()/2
-                # + 2 is a fudge factor because digits aren't centered within
-                # the font's vertical space.
-                self.display.blit(text, (tx, ty + 2))
-        
+            # Draw the node value as centered as we can get.
+            text = self.font.render("%d" % self.board.cells[row][col], False, text_col)
+            tx = x1 + w/2 - text.get_width()/2
+            ty = y1 + h/2 - text.get_height()/2
+            # + 2 is a fudge factor because digits aren't centered within
+            # the font's vertical space.
+            self.display.blit(text, (tx, ty + 2))
+    
         # Draw a bridge here if necessary.
         elif self.board.cells[row][col] == '|':
             pygame.draw.rect(self.display, (255,255,255), pygame.Rect(x1+w/2, y1, 2, h))
@@ -427,6 +461,15 @@ class Window(object):
             pygame.draw.rect(self.display, (255,255,255), pygame.Rect(x1, y1+h/2-2, w, 2))
             pygame.draw.rect(self.display, (255,255,255), pygame.Rect(x1, y1+h/2+2, w, 2))
     
+    def draw_troll(self, x, y):
+        x1 = x * self.TILE_WIDTH
+        y1 = y * self.TILE_HEIGHT
+        w = self.TILE_WIDTH
+        h = self.TILE_HEIGHT
+        tx = x1 + w/2 - self.troll_face.get_width()/2
+        ty = y1 + h/2 - self.troll_face.get_height()/2
+        self.display.blit(self.troll_face, (tx + 2, ty))
+    
     def draw(self):
         """Draw the board."""
         
@@ -434,6 +477,12 @@ class Window(object):
         for i in range(self.board.size):
             for j in range(self.board.size):
                 self.draw_tile(i, j)
+        
+        # Draw any current trolls
+        for p in self.troll_paths:
+            step = self.frame_num % len(p)
+            step_x, step_y = p[step]
+            self.draw_troll(step_x, step_y)
         
         # Draw an outline for the current possible moves.
         for x1,y1,x2,y2 in self.moves:
@@ -461,6 +510,8 @@ class Window(object):
         to put it on the screen."""
         self.draw()
         pygame.display.flip()
+        
+        self.frame_num += 1
 
 
 class Control(object):
@@ -538,9 +589,39 @@ class Control(object):
         self.board.draw_line(x1,y1, x2,y2, thickness)
         
         self.board.map.update()
+        self.update_trolls(self.board.map.cycles)
         
         return True
-
+    
+    def update_trolls(self, cycles):
+        self.window.troll_paths = []
+        
+        # Add trolls for cycles
+        for c in cycles:
+            p = []
+            for i in range(len(c)):
+                x1, y1 = c[i]
+                x2, y2 = c[(i+1) % len(c)]
+                p.extend(self.board.get_line(x1, y1, x2, y2))
+            self.window.troll_paths.append(p)
+        
+        # Add trolls for too many bridges
+        for x, y in self.board.nodes:
+            if self.board.cells[y][x] < 0:
+                p = []
+                dirs = [(0,-1, ['|', 'H']), (0,1, ['|', 'H']), (-1,0, ['-', '=']), (1, 0, ['-', '='])]
+                for dx,dy,valid in dirs:
+                    new_x = x + dx
+                    new_y = y + dy
+                    if not self.board.in_range(new_x, new_y) or self.board.cells[new_y][new_x] not in valid:
+                        continue
+                    x2, y2 = self.board.find_node(x, y, dx, dy)
+                    p.extend(self.board.get_line(x, y, x2, y2))
+                    p.extend(self.board.get_line(x2, y2, x, y))
+                self.window.troll_paths.append(p)
+    
+    def append_path(self, x1, y1, x2, y2):
+        self.window.troll_paths.append(self.board.get_line(x1, y1, x2, y2))
 
 class Solver(object):
     """An AI solver for the bridges game.  On each invocation, attempts to
