@@ -367,16 +367,15 @@ class ComponentsMap(object):
         return cyclic
         
     def found_cycle(self, x, y, new_x, new_y, path):
-        try:
-            # See if the cycle leads back up to the current path
-            i = path.index((new_x, new_y))
-            c = path[i:] + [(x, y)]
-            #print 'found self-path cycle', c
-        except ValueError:
-            # So the cycle must lead to another path
-            p1 = list(reversed(self.paths[(new_x, new_y)]))
-            c = p1 + path + [(new_x, new_y)]
-            #print 'found other-path cycle', c
+        path1 = path + [(x, y)]
+        path2 = self.paths[(new_x, new_y)] + [(new_x, new_y)]
+        i = 1
+        minlen = min(len(path1), len(path2))
+        while i < minlen and path1[i] == path2[i]:
+            i += 1
+        c = path1[i:] + list(reversed(path2[i-1:]))
+        #print 'found other-path cycle', c, 'from depth', i
+        #print 'paths were', path1, path2
         self.cycles.append(c)
 
 
