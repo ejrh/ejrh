@@ -400,8 +400,14 @@ class Window(object):
         
         # Make a troll face image.
         face_col = (255,0,0)
-        text = self.font.render("D:", False, face_col)
-        self.troll_face = pygame.transform.rotate(text, 90)
+        fill_col = (100, 100, 50)
+        fg_text = self.font.render("D:", False, face_col)
+        bg_text = self.font.render("D:", False, fill_col)
+        bg_text.blit(bg_text, (2, 0))
+        bg_text.blit(bg_text, (0, 2))
+        combined_text = bg_text.convert()
+        combined_text.blit(fg_text, (1, 1))
+        self.troll_face = pygame.transform.rotate(combined_text, 90)
         
         self.current_tile = None
         
@@ -467,7 +473,7 @@ class Window(object):
         h = self.TILE_HEIGHT
         tx = x1 + w/2 - self.troll_face.get_width()/2
         ty = y1 + h/2 - self.troll_face.get_height()/2
-        self.display.blit(self.troll_face, (tx + 2, ty))
+        self.display.blit(self.troll_face, (tx, ty))
     
     def draw(self):
         """Draw the board."""
