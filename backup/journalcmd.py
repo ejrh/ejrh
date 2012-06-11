@@ -6,6 +6,8 @@ import winerror
 import pywintypes
 
 USN_BUFFER_SIZE = 65536
+JOURNAL_MAX_SIZE = 16*1048576
+JOURNAL_ALLOCATION_DELTA = 65536
    
 def open_volume(drive):
     volh = win32file.CreateFile('\\\\.\\' + drive, win32file.GENERIC_READ,
@@ -14,7 +16,7 @@ def open_volume(drive):
     return volh
 
 def create_journal(volh):
-    inp = struct.pack('QQ', 0, 0)
+    inp = struct.pack('QQ', JOURNAL_MAX_SIZE, JOURNAL_ALLOCATION_DELTA)
     win32file.DeviceIoControl(volh, winioctlcon.FSCTL_CREATE_USN_JOURNAL, inp, None)
 
 def query_journal(volh):
