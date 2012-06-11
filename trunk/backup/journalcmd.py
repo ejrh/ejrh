@@ -70,7 +70,12 @@ def enum_usn_data(volh, first_frn, low_usn, high_usn):
 
 def generate_journal(volh, journal_id, first_usn):
     while True:
-        first_usn, tups = read_journal(volh, journal_id, first_usn)
+        try:
+            first_usn, tups = read_journal(volh, journal_id, first_usn)
+        except pywintypes.error, ex:
+            if ex.args[0] == winerror.ERROR_JOURNAL_ENTRY_DELETED:
+                continue
+            raise
         if len(tups) == 0:
             break
         for t,n in tups:
