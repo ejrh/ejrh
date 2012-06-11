@@ -117,25 +117,6 @@ class Backup(object):
         self.enable_journal = True
         self.enable_dir_reuse = False
     
-    def flesh_out_paths(self, paths):
-        if paths is None:
-            return None
-        drive = os.path.splitdrive(self.source)[0]
-        new_paths = set()
-        for p in paths:
-            subpath = os.path.normcase(os.path.join(drive, p))
-            subpath = subpath.replace('\\', '/')
-            subpath = subpath.replace('//', '/')
-            new_paths.add(subpath)
-            """components = p.split('/')
-            subpath = drive
-            for c in components:
-                subpath = subpath + '/' + c
-                subpath = subpath.replace('//', '/')
-                new_paths.add(os.path.normcase(subpath))"""
-        self.notifier.notice('Fleshed out %d paths' % len(new_paths))
-        return new_paths
-
     def get_md5(self, source_path):
         f = open(source_path, 'rb')
         big_buf = []
@@ -257,33 +238,23 @@ class Backup(object):
         return item_path in self.exclusions
     
     def is_reusable(self, item_path):
+        if not self.enable_journal:
+            return False
+        
         if self.previous_name is None:
             return False
-        if self.changed_paths is None:
-            return False
+        
         source_path = os.path.join(self.source, item_path)
         if os.path.isdir(source_path) and not self.enable_dir_reuse:
             return False
+        
         source_path = source_path.replace('\\', '/')
         if source_path[-1] == '/':
             source_path = source_path[:len(source_path)-1]
-        #self.notifier.notice('Checking for %s in changed paths' % source_path)
-        #print self.changed_paths
-        components = source_path.split('/')
-        subpath = ''
-        for c in components:
-            if subpath == '':
-                subpath = c
-            else:
-                subpath = subpath + '/' + c
-            subpath = os.path.normcase(subpath)
-            subpath = subpath.replace('\\', '/')
-            subpath = subpath.replace('//', '/')
-            #self.notifier.notice('Checking for %s' % subpath)
-            if subpath in self.changed_paths:
-                #self.notifier.notice('Found')
-                return False
-        #self.notifier.notice('Not found')
+        
+        if self.journal.affected(source_path):
+            return False
+        
         return True
     
     def backup_item(self, item_path):
@@ -295,6 +266,7 @@ class Backup(object):
                 self.reuse_item(item_path)
                 return
             except pywintypes.error:
+                self.notifier.notice('Falling back to copy')
                 pass
         
         source_path = os.path.join(self.source, item_path)
@@ -370,13 +342,6 @@ class Backup(object):
         if self.enable_journal:
             self.open_journal()
             self.journal.process()
-            if self.journal.replay_all:
-                self.changed_paths = None
-            else:
-                paths = self.journal.get_changed_paths()
-                self.changed_paths = self.flesh_out_paths(paths)
-        else:
-            self.changed_paths = None      
         
         try:
             self.load_manifest()

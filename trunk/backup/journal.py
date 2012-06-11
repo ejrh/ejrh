@@ -11,9 +11,20 @@ http://www.microsoft.com/msj/1099/journal2/journal2.aspx
 """
 
 import sys
+import os
 import cPickle
 
 from journalcmd import *
+
+
+def normalise(path):
+    """Return a normalised path: lowercase, with forward slashes, starting at / (i.e. no drive)."""
+    path = os.path.normcase(path)
+    path = path.replace('\\', '/')
+    path = path.replace('//', '/')    
+    if len(path) >= 2 and path[1] == ':':
+        path = path[2:]
+    return path
 
 
 class FrnMap(object):
@@ -47,6 +58,7 @@ class Journal(object):
     
     def __init__(self, drive):
         self.drive = drive
+        self.set_state((None, None, {}))
 
     def process_usn(self, tup, fn):
         if tup[10] & win32file.FILE_ATTRIBUTE_DIRECTORY:
@@ -60,7 +72,7 @@ class Journal(object):
             print >>sys.stderr, "Error outputting file name:", ex
             return
         #print path
-        self.changed_paths.add(path)
+        self.changed_paths.add(normalise(path))
 
     def get_state(self):
         return self.journal_id, self.last_usn, self.frn_to_dir_map.map
@@ -71,6 +83,18 @@ class Journal(object):
         self.frn_to_dir_map = FrnMap()
         self.frn_to_dir_map.map.update(state[2])
     
+    def load_state(self, filename):
+        f = open(filename, 'rb')
+        obj = cPickle.load(f)
+        f.close()
+        self.set_state(obj)
+        
+    def save_state(self, filename):
+        obj = self.get_state()
+        f = open(filename, 'wb')
+        cPickle.dump(obj, f)
+        f.close()
+
     def get_changed_paths(self):
         return self.changed_paths
 
@@ -111,19 +135,55 @@ class Journal(object):
                 self.last_usn = tup[5]
         
         win32file.CloseHandle(volh)
+    
+    def affected(self, path):
+        """Could this path possibly have changed according to the journal?"""
+        
+        components = normalise(path).split('/')
+        subpath = '/'
+        for c in components:
+            if subpath == '':
+                subpath = c
+            else:
+                subpath = subpath + '/' + c
+            subpath = normalise(subpath)
+            if subpath in self.changed_paths:
+                return True
+        
+        return False
 
 
 def main(argv=None):
     if argv is None:
         argv = sys.argv
     drive = argv[1]
-    if len(drive) != 2 or drive[1] != ':':
-        raise Exception, 'Drive must be specified, e.g. C:'
+    filename = argv[2]
     
+    print 'Opening journal'
     j = Journal(drive)
+    try:
+        j.load_state(filename)
+    except IOError:
+        pass
+        
+    print 'Processing'
     j.process()
-    for p in j.get_changed_paths():
-        print p
+    
+    print 'Changed paths:'
+    for p in sorted(j.get_changed_paths()):
+        try:
+            print p
+        except UnicodeEncodeError:
+            print repr(p)
+    
+    print 'Affected files:'
+    for dirpath, dirnames, filenames in os.walk(os.getcwd()):
+        for fn in filenames:
+            path = normalise(os.path.join(dirpath, fn))
+            if j.affected(path):
+                print path
+    
+    j.save_state(filename)
 
 
 if __name__ == '__main__':
