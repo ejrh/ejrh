@@ -652,6 +652,36 @@ END;
 $$;
 
 
+CREATE OR REPLACE FUNCTION merge_revisions(INTEGER, INTEGER) RETURNS INTEGER
+LANGUAGE 'plpgsql' VOLATILE STRICT AS
+$$
+DECLARE
+    min_id INTEGER;
+    max_id INTEGER;
+    min_root INTEGER;
+    max_root INTEGER;
+BEGIN
+    IF $1 = $2 THEN
+        RETURN $1;
+    END IF;
+    
+    min_id = LEAST($1, $2);
+    max_id = GREATEST($1, $2);
+    
+    min_root := (SELECT root_id FROM revision WHERE rev_id = min_id);
+    max_root := (SELECT root_id FROM revision WHERE rev_id = max_id);
+    
+    UPDATE file_in_dir SET dir_id = max_root WHERE dir_id = min_root;
+    
+    DELETE FROM revision WHERE rev_id = min_id;
+    
+    UPDATE revision SET rev_id = rev_id - 1 WHERE rev_id > min_id;
+    
+    RETURN max_id - 1;
+END;
+$$;
+
+
 CREATE TYPE rev_path AS (rev_id int4, path text);
 
 
