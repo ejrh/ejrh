@@ -17,6 +17,10 @@ import cPickle
 from journalcmd import *
 
 
+def default_notifier(msg):
+    print msg
+
+
 def normalise(path):
     """Return a normalised path: lowercase, with forward slashes, starting at / (i.e. no drive)."""
     path = os.path.normcase(path)
@@ -71,7 +75,6 @@ class Journal(object):
         except UnicodeEncodeError, ex:
             print >>sys.stderr, "Error outputting file name:", ex
             return
-        #print path
         self.changed_paths.add(normalise(path))
 
     def get_state(self):
@@ -98,14 +101,18 @@ class Journal(object):
     def get_changed_paths(self):
         return self.changed_paths
 
-    def process(self):
+    def process(self, notifier=default_notifier):
+        notifier('Opening volume %s' % self.drive)
         volh = open_volume(self.drive)
         
+        notifier('Querying journal')
         try:
             tup = query_journal(volh)
         except pywintypes.error, ex:
             if ex.winerror == 1179:   # ERROR_JOURNAL_NOT_ACTIVE
+                notifier('Creating new journal')
                 create_journal(volh)
+                notifier('Re-querying')
                 tup = query_journal(volh)
             else:
                 raise
@@ -115,7 +122,10 @@ class Journal(object):
         self.replay_all = False
         
         if self.journal_id != queried_journal_id or first_usn > self.last_usn:
-            print 'replaying', self.journal_id, queried_journal_id, first_usn, self.last_usn
+            if self.journal_id is None:
+                notifier('Journal is new (available id 0x%016x, first available USN 0x%016x)' % (queried_journal_id, first_usn))
+            else:
+                notifier('Journal is too new (recorded id 0x%016x, available id 0x%016x, last recorded USN 0x%016x, first available USN 0x%016x)' % (self.journal_id, queried_journal_id, self.last_usn, first_usn))
             self.journal_id = queried_journal_id
             self.last_usn = first_usn
             self.replay_all = True
@@ -123,17 +133,30 @@ class Journal(object):
         self.changed_paths = set()
 
         if self.replay_all:
+            notifier('Building new directory to FRN map')
             for tup,fn in generate_usns(volh, 0, next_usn):
                 if tup[10] & win32file.FILE_ATTRIBUTE_DIRECTORY:
                     self.frn_to_dir_map.set(tup[3], tup[4], fn)
+            
+            notifier('Replaying all URNs')
             for tup,fn in generate_usns(volh, 0, next_usn):
                 self.process_usn(tup, fn)
+                if tup[5] > self.last_usn:
+                    self.last_usn = tup[5]
         
-        for tup,fn in generate_journal(volh, self.journal_id, self.last_usn):
-            if self.replay_all or self.last_usn != tup[5]:
+        start_usn = self.last_usn
+        notifier('Replaying journal from USN 0x%016x to 0x%016x' % (start_usn, next_usn))
+        last_pct = 0
+        for tup,fn in generate_journal(volh, self.journal_id, start_usn):
+            if self.replay_all or self.last_usn < tup[5]:
                 self.process_usn(tup, fn)
                 self.last_usn = tup[5]
+            pct = 100 * (tup[5] - start_usn) / (next_usn - start_usn)
+            if pct > last_pct:
+                notifier('Replayed USN 0x%016x; %d percent done' % (tup[5], pct))
+                last_pct = pct
         
+        notifier('Closing volume')
         win32file.CloseHandle(volh)
     
     def affected(self, path):
@@ -157,12 +180,16 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv
     drive = argv[1]
-    filename = argv[2]
+    journal_filename = argv[2]
+    try:
+        target_dir = argv[3]
+    except IndexError:
+        target_dir = os.getcwd()
     
     print 'Opening journal'
     j = Journal(drive)
     try:
-        j.load_state(filename)
+        j.load_state(journal_filename)
     except IOError:
         pass
         
@@ -177,13 +204,13 @@ def main(argv=None):
             print repr(p)
     
     print 'Affected files:'
-    for dirpath, dirnames, filenames in os.walk(os.getcwd()):
+    for dirpath, dirnames, filenames in os.walk(target_dir):
         for fn in filenames:
             path = normalise(os.path.join(dirpath, fn))
             if j.affected(path):
                 print path
     
-    j.save_state(filename)
+    j.save_state(journal_filename)
 
 
 if __name__ == '__main__':

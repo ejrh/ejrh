@@ -73,8 +73,8 @@ def generate_journal(volh, journal_id, first_usn):
         try:
             first_usn, tups = read_journal(volh, journal_id, first_usn)
         except pywintypes.error, ex:
-            if ex.args[0] == winerror.ERROR_JOURNAL_ENTRY_DELETED:
-                continue
+            if ex.winerror == 1181:   # ERROR_JOURNAL_ENTRY_DELETED
+                break
             raise
         if len(tups) == 0:
             break
