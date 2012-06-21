@@ -143,6 +143,10 @@ class Journal(object):
                 self.process_usn(tup, fn)
                 if tup[5] > self.last_usn:
                     self.last_usn = tup[5]
+            
+            notifier('Re-querying journal')
+            tup = query_journal(volh)
+            next_usn = tup[2]
         
         start_usn = self.last_usn
         notifier('Replaying journal from USN 0x%016x to 0x%016x' % (start_usn, next_usn))
