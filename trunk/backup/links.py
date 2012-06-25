@@ -20,6 +20,9 @@ def make_symlink(dest_path, link_path):
 def make_reparse_point(dest, link):
     if dest[-1] == '/' or dest[-1] == '\\':
         dest = dest[:len(dest)-1]
+    
+    link = os.path.abspath(link)
+    
     if link[-1] == '/' or link[-1] == '\\':
         link = link[:len(link)-1]
     os.mkdir(dest)
@@ -29,5 +32,22 @@ def make_reparse_point(dest, link):
     link = '\\??\\' + link
     link = link.encode('utf-16')[2:]
     datalen = len(link)
-    inp = struct.pack('LHHHHHH', tag, datalen+8+4, 0, 0, datalen, datalen+2, 0) + link + '\0\0\x91\x7c'
-    win32file.DeviceIoControl(dirh, winioctlcon.FSCTL_SET_REPARSE_POINT, inp, None)
+    inp = struct.pack('LHHHHHH', tag, datalen+8+4, 0, 0, datalen, datalen+2, 0) + link + '\0\0\0\0'
+    try:
+        win32file.DeviceIoControl(dirh, winioctlcon.FSCTL_SET_REPARSE_POINT, inp, None)
+    except:
+        os.rmdir(dest)
+        raise
+    finally:
+        win32file.CloseHandle(dirh)
+
+
+def print_info(dest):
+    if dest[-1] == '/' or dest[-1] == '\\':
+        dest = dest[:len(dest)-1]
+    dirh = win32file.CreateFile(dest, win32file.GENERIC_READ, 0, None, 
+            win32file.OPEN_EXISTING, win32file.FILE_FLAG_OPEN_REPARSE_POINT| win32file.FILE_FLAG_BACKUP_SEMANTICS, None)
+    MAX_SIZE = 1024
+    buf = win32file.DeviceIoControl(dirh, winioctlcon.FSCTL_GET_REPARSE_POINT, None, MAX_SIZE)
+    print buf.encode('hex')
+    print repr(buf)
