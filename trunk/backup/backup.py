@@ -35,11 +35,10 @@ import sys
 import os
 import os.path
 import cPickle
-import struct
 import hashlib
-import win32file
-import winioctlcon
 import pywintypes
+
+import links
 
 
 BUFFER_SIZE = 1024*1024
@@ -86,24 +85,6 @@ class ConsoleNotifier(object):
         print >>sys.stderr, 'Error: %s' % msg
         if ex is not None:
             print >>sys.stderr, 'Exception was:', ex
-
-
-# Reference: http://msdn.microsoft.com/en-us/library/cc232007%28PROT.13%29.aspx
-def make_reparse_point(dest, link):
-    if dest[-1] == '/' or dest[-1] == '\\':
-        dest = dest[:len(dest)-1]
-    if link[-1] == '/' or link[-1] == '\\':
-        link = link[:len(link)-1]
-    import journalcmd
-    os.mkdir(dest)
-    dirh = win32file.CreateFile(dest, win32file.GENERIC_READ | win32file.GENERIC_WRITE, 0, None, 
-            win32file.OPEN_EXISTING, win32file.FILE_FLAG_OPEN_REPARSE_POINT| win32file.FILE_FLAG_BACKUP_SEMANTICS, None)
-    tag = 0xA0000003L
-    link = '\\??\\' + link
-    link = link.encode('utf-16')[2:]
-    datalen = len(link)
-    inp = struct.pack('LHHHHHH', tag, datalen+8+4, 0, 0, datalen, datalen+2, 0) + link + '\0\0\x91\x7c'
-    win32file.DeviceIoControl(dirh, winioctlcon.FSCTL_SET_REPARSE_POINT, inp, None)
 
 
 class Backup(object):
@@ -179,7 +160,7 @@ class Backup(object):
     
         link_path = os.path.join(self.target, n)
         dest_path = os.path.join(self.target, new_path)
-        win32file.CreateHardLink(dest_path, link_path)
+        links.make_hardlink(dest_path, link_path)
         return True
         
     def copy_item(self, item_path):
@@ -211,15 +192,13 @@ class Backup(object):
         link_path = os.path.join(self.target, self.previous_name, item_path)
         if os.path.isfile(source_path):
             try:
-                win32file.CreateHardLink(dest_path, link_path)
+                links.make_hardlink(dest_path, link_path)
             except Exception, ex:
                 self.notifier.error('Unable to make hard link from %s to %s' % (dest_path, link_path), ex)
                 raise ex
         else:
-            try:    
-                win32file.CreateSymbolicLink(dest_path, link_path, 1)   # SYMBOLIC_LINK_FLAG_DIRECTORY
-            except NotImplementedError:
-                make_reparse_point(dest_path, link_path)
+            print 'hi'
+            links.make_symlink(dest_path, link_path)
 
     def make_dir(self, item_path):
         dest_path = os.path.join(self.target, self.name, item_path)
