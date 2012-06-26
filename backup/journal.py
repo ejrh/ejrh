@@ -18,6 +18,10 @@ from journalcmd import *
 
 
 def default_notifier(msg):
+    pass
+
+
+def print_notifier(msg):
     print msg
 
 
@@ -198,7 +202,7 @@ def main(argv=None):
         pass
         
     print 'Processing'
-    j.process()
+    j.process(notifier=print_notifier)
     
     print 'Changed paths:'
     for p in sorted(j.get_changed_paths()):
