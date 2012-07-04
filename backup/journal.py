@@ -165,7 +165,7 @@ class Journal(object):
                 last_pct = pct
         
         notifier('Closing volume')
-        win32file.CloseHandle(volh)
+        close_volume(volh)
     
     def affected(self, path):
         """Could this path possibly have changed according to the journal?"""
