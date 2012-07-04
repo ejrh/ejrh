@@ -35,6 +35,21 @@ def normalise(path):
     return path
 
 
+def get_ancestors(path):
+    """Return a list of the ancestor directories of this file."""
+    ancestors = []
+    components = normalise(path).split('/')
+    subpath = '/'
+    for c in components:
+        if subpath == '':
+            subpath = c
+        else:
+            subpath = subpath + '/' + c
+        subpath = normalise(subpath)
+        ancestors.append(subpath)
+    return ancestors
+
+
 class FrnMap(object):
     """A map from FRNs to parent FRNs and names.  This is enough information to
     translate a FRN to a path (as done in build_path)."""
@@ -79,6 +94,9 @@ class Journal(object):
         except UnicodeEncodeError, ex:
             print >>sys.stderr, "Error outputting file name:", ex
             return
+        for p in get_ancestors(normalise(path))[:-1]:
+            if p not in self.affected_dirs:
+                self.affected_dirs.add(p)
         self.changed_paths.add(normalise(path))
 
     def get_state(self):
@@ -135,6 +153,7 @@ class Journal(object):
             self.replay_all = True
         
         self.changed_paths = set()
+        self.affected_dirs = set()
 
         if self.replay_all:
             notifier('Building new directory to FRN map')
@@ -170,15 +189,13 @@ class Journal(object):
     def affected(self, path):
         """Could this path possibly have changed according to the journal?"""
         
-        components = normalise(path).split('/')
-        subpath = '/'
-        for c in components:
-            if subpath == '':
-                subpath = c
-            else:
-                subpath = subpath + '/' + c
-            subpath = normalise(subpath)
-            if subpath in self.changed_paths:
+        path = normalise(path)
+        
+        if path in self.affected_dirs:
+            return True
+        
+        for p in get_ancestors(path):
+            if p in self.changed_paths:
                 return True
         
         return False
@@ -211,9 +228,9 @@ def main(argv=None):
         except UnicodeEncodeError:
             print repr(p)
     
-    print 'Affected files:'
+    print 'Affected paths:'
     for dirpath, dirnames, filenames in os.walk(target_dir):
-        for fn in filenames:
+        for fn in filenames + dirnames:
             path = normalise(os.path.join(dirpath, fn))
             if j.affected(path):
                 print path
