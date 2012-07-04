@@ -15,6 +15,9 @@ def open_volume(drive):
             win32file.OPEN_EXISTING, win32file.FILE_ATTRIBUTE_NORMAL, None)
     return volh
 
+def close_volume(volh):
+        win32file.CloseHandle(volh)
+
 def create_journal(volh):
     inp = struct.pack('QQ', JOURNAL_MAX_SIZE, JOURNAL_ALLOCATION_DELTA)
     win32file.DeviceIoControl(volh, winioctlcon.FSCTL_CREATE_USN_JOURNAL, inp, None)
