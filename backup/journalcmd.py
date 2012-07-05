@@ -5,7 +5,7 @@ import win32api
 import winerror
 import pywintypes
 
-USN_BUFFER_SIZE = 65536
+USN_BUFFER_SIZE = 4096
 JOURNAL_MAX_SIZE = 16*1048576
 JOURNAL_ALLOCATION_DELTA = 65536
    
