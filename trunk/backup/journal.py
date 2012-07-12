@@ -156,16 +156,19 @@ class Journal(object):
         self.affected_dirs = set()
 
         if self.replay_all:
-            notifier('Building new directory to FRN map')
-            for tup,fn in generate_usns(volh, 0, next_usn):
-                if tup[10] & win32file.FILE_ATTRIBUTE_DIRECTORY:
-                    self.frn_to_dir_map.set(tup[3], tup[4], fn)
+            tup = get_ntfs_volume_data(volh)
+            mft_max = tup[9] / 1024
             
-            notifier('Replaying all URNs')
-            for tup,fn in generate_usns(volh, 0, next_usn):
+            notifier('Replaying all USNs from MFT')
+            last_pct = 0
+            for mft_pos,tup,fn in generate_usns(volh, 0, next_usn):
                 self.process_usn(tup, fn)
                 if tup[5] > self.last_usn:
                     self.last_usn = tup[5]
+                pct = 100 * mft_pos / mft_max
+                if pct > last_pct:
+                    notifier('Replayed MFT pos %d; %d percent done' % (mft_pos, pct))
+                    last_pct = pct
             
             notifier('Re-querying journal')
             tup = query_journal(volh)

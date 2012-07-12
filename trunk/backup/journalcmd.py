@@ -29,6 +29,13 @@ def query_journal(volh):
     tup = struct.unpack(fmt, buf)
     return tup
 
+def get_ntfs_volume_data(volh):
+    fmt = 'qqqqqLLLLqqqqq'
+    len = struct.calcsize(fmt)
+    buf = win32file.DeviceIoControl(volh, winioctlcon.FSCTL_GET_NTFS_VOLUME_DATA, None, len)
+    tup = struct.unpack(fmt, buf)
+    return tup
+
 def get_volume_info(drive):
     return win32api.GetVolumeInformation('\\\\.\\' + drive + '\\')
 
@@ -85,10 +92,12 @@ def generate_journal(volh, journal_id, first_usn):
             yield t,n
 
 def generate_usns(volh, low_usn, high_usn):
-    first_frn = 0
+    mft_pos = 0
     while True:
-        first_frn, tups = enum_usn_data(volh, first_frn, low_usn, high_usn)
+        next_mft_pos, tups = enum_usn_data(volh, mft_pos, low_usn, high_usn)
         if len(tups) == 0:
             break
         for t,n in tups:
-            yield t,n
+            yield mft_pos,t,n
+        mft_pos = next_mft_pos
+
