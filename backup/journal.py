@@ -157,17 +157,20 @@ class Journal(object):
 
         if self.replay_all:
             tup = get_ntfs_volume_data(volh)
-            mft_max = tup[9] / 1024
+            mft_entry_size = tup[7]
+            mft_max = tup[9] / mft_entry_size
             
-            notifier('Replaying all USNs from MFT')
+            notifier('Reading all USNs from MFT')
             last_pct = 0
-            for mft_pos,tup,fn in generate_usns(volh, 0, next_usn):
+            for next_frn,tup,fn in generate_usns(volh, 0, next_usn):
                 self.process_usn(tup, fn)
                 if tup[5] > self.last_usn:
                     self.last_usn = tup[5]
+                    
+                mft_pos = next_frn & 0xFFFFFFFFFFFF
                 pct = 100 * mft_pos / mft_max
-                if pct > last_pct:
-                    notifier('Replayed MFT pos %d; %d percent done' % (mft_pos, pct))
+                if pct > last_pct and 0 <= pct <= 100:
+                    notifier('Read MFT pos %d; %d percent done' % (mft_pos, pct))
                     last_pct = pct
             
             notifier('Re-querying journal')

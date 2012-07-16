@@ -92,12 +92,12 @@ def generate_journal(volh, journal_id, first_usn):
             yield t,n
 
 def generate_usns(volh, low_usn, high_usn):
-    mft_pos = 0
+    frn_pos = 0
     while True:
-        next_mft_pos, tups = enum_usn_data(volh, mft_pos, low_usn, high_usn)
+        next_frn, tups = enum_usn_data(volh, frn_pos, low_usn, high_usn)
         if len(tups) == 0:
             break
         for t,n in tups:
-            yield mft_pos,t,n
-        mft_pos = next_mft_pos
+            yield frn_pos,t,n
+        frn_pos = next_frn
 
