@@ -36,7 +36,6 @@ import os
 import os.path
 import cPickle
 import hashlib
-import pywintypes
 
 import links
 
@@ -160,7 +159,7 @@ class Backup(object):
     
         link_path = os.path.join(self.target, n)
         dest_path = os.path.join(self.target, new_path)
-        links.make_hardlink(dest_path, link_path)
+        links.link(link_path, dest_path)
         return True
         
     def copy_item(self, item_path):
@@ -192,13 +191,12 @@ class Backup(object):
         link_path = os.path.join(self.target, self.previous_name, item_path)
         if os.path.isfile(source_path):
             try:
-                links.make_hardlink(dest_path, link_path)
+                links.link(link_path, dest_path)
             except Exception, ex:
                 self.notifier.error('Unable to make hard link from %s to %s' % (dest_path, link_path), ex)
                 raise ex
         else:
-            print 'hi'
-            links.make_symlink(dest_path, link_path)
+            links.symlink(link_path, dest_path)
 
     def make_dir(self, item_path):
         dest_path = os.path.join(self.target, self.name, item_path)
@@ -244,7 +242,7 @@ class Backup(object):
             try:
                 self.reuse_item(item_path)
                 return
-            except pywintypes.error:
+            except Exception:
                 self.notifier.notice('Falling back to copy')
                 pass
         
@@ -350,7 +348,8 @@ def main(args=None):
     backup.target = args[2]
     backup.name = args[3]
     #backup.enable_dir_reuse = True
-    #backup.enable_journal = False
+    if not ALLOW_JOURNAL:
+        backup.enable_journal = False
     backup.run()
 
 

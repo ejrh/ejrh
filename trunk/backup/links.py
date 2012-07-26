@@ -1,8 +1,26 @@
 import os
 import struct
-import win32file
-import winioctlcon
-import pywintypes
+import platform
+
+if platform.system() == 'Windows':
+    import win32file
+    import winioctlcon
+    import pywintypes
+    
+    def link(src, dest):
+        try:
+            make_hardlink(dest, src)
+        except pywintypes.error, ex:
+            raise OSError(ex)
+    
+    def symlink(src, dest):
+        try:
+            make_symlink(dest, src)
+        except pywintypes.error, ex:
+            raise OSError(ex)
+
+else:
+    from os import link, symlink
 
 
 def make_hardlink(dest_path, link_path):
