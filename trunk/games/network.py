@@ -309,8 +309,6 @@ class Window(object):
         else:
             pygame.draw.rect(self.display, (150, 100, 50), pygame.Rect(col*50+1, row*50+1, 48, 48))
         wire_col = [tile.heat[0]*255, tile.heat[1]*255, tile.heat[2]*255]
-        if sum(tile.heat) < sum(tile.prev_heat):
-            wire_col = (0, 0, 0)
         if tile.ports[0]:
             pygame.draw.rect(self.display, wire_col, pygame.Rect(col*50+21, row*50+1, 8, 24))
         if tile.ports[1]:
@@ -349,8 +347,6 @@ class Window(object):
             bg_col = (255, 255, 255)
         pygame.draw.rect(self.display, bg_col, pygame.Rect(col*6+offset_x, row*6+offset_y, 6, 6))
         wire_col = [tile.heat[0]*255, tile.heat[1]*255, tile.heat[2]*255]
-        if sum(tile.heat) < sum(tile.prev_heat):
-            wire_col = (0, 0, 0)
         if tile.ports[0]:
             pygame.draw.rect(self.display, wire_col, pygame.Rect(col*6+offset_x+2, row*6+offset_y, 2,4))
         if tile.ports[1]:
