@@ -24,6 +24,9 @@ import random
 import pygame
 
 
+HEAT_DECAY = (-0.015, -0.015, -0.015)
+
+
 def heat_flow(h1, h2):
     a = max(0, h1[0] - h2[0]) / 2.0
     b = max(0, h1[1] - h2[1]) / 2.0
@@ -206,7 +209,7 @@ class Map(object):
     def update(self):
         adj = []
         for i in range(self.height):
-            adj.append([(-0.01, -0.01, -0.01)]*self.width)
+            adj.append([HEAT_DECAY]*self.width)
         
         for i in range(self.height):
             for j in range(self.width):
