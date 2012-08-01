@@ -1,6 +1,6 @@
 """
 Network.py, an experimental clone of KDE's KNetwalk.
-Copyright (C) 2010-11  Edmund Horner
+Copyright (C) 2010-12  Edmund Horner
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -141,14 +141,19 @@ class Map(object):
             j = random.randint(0, self.height - 1)
             t = Tile(j, i, source=k%3)
             self.tiles[i][j] = t
-            seeds.append(t)
+            seeds.append([t])
         
-        while seeds:
-            r = random.randint(0,len(seeds)-1)
-            s = seeds[r]
+        next_seed = 0
+        while any(seeds):
+            seed_list = seeds[next_seed]
+            if len(seed_list) == 0:
+                next_seed = (next_seed+1) % self.num_seeds
+                continue
+            r = random.randint(0,len(seed_list)-1)
+            s = seed_list[r]
             ns = self.get_neighbours(s)
             if all([n is not None for n in ns]):
-                seeds = seeds[:r] + seeds[r+1:]
+                seeds[next_seed] = seed_list[:r] + seed_list[r+1:]
                 continue
             r = random.randint(0,3)
             if ns[r] is not None:
@@ -159,7 +164,8 @@ class Map(object):
             if sum(s.ports) < 3:
                 s.ports[r] = True
                 t.ports[(r+2)%4] = True
-                seeds.append(t)
+                seed_list.append(t)
+                next_seed = (next_seed+1) % self.num_seeds
         
         for row in self.tiles:
             for t in row:
