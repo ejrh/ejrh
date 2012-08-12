@@ -639,6 +639,8 @@ def main(args=None):
     auto_solve = False
     
     ai = AI(map)
+    
+    click_pos = None
 
     while True:
         ev = pygame.event.wait()
@@ -680,21 +682,48 @@ def main(args=None):
                 window.draw()
                 pygame.display.flip()
         if ev.type == pygame.MOUSEBUTTONDOWN:
-            x, y = ev.pos
-            x, y = window.locate_click(x, y)
-            if x >= 0 and y >= 0 and x < map.width and y < map.height:
-                if ev.button == 1 and not map.tiles[y][x].locked:
-                    map.tiles[y][x].rotate(3)
-                elif ev.button == 3 and not map.tiles[y][x].locked:
-                    map.tiles[y][x].rotate(1)
-                elif ev.button == 2:
-                    map.tiles[y][x].locked = not map.tiles[y][x].locked
-                    if not map.tiles[y][x].locked:
-                        map.tiles[y][x].possibles = [True]*4
-                        map.tiles[y][x].necessaries = [False]*4
-                window.draw()
-                pygame.display.flip()
+            click_pos = ev.pos
+            last_temp_scroll_x, last_temp_scroll_y = 0, 0
+        elif ev.type == pygame.MOUSEBUTTONUP:
+            click_pos2 = ev.pos
+            rel_x = click_pos[0] - click_pos2[0] 
+            rel_y = click_pos[1] - click_pos2[1] 
+            if abs(rel_x) < 5 and abs(rel_y) < 5:
+                x, y = ev.pos
+                x, y = window.locate_click(x, y)
+                if x >= 0 and y >= 0 and x < map.width and y < map.height:
+                    if ev.button == 1 and not map.tiles[y][x].locked:
+                        map.tiles[y][x].rotate(3)
+                    elif ev.button == 3 and not map.tiles[y][x].locked:
+                        map.tiles[y][x].rotate(1)
+                    elif ev.button == 2:
+                        map.tiles[y][x].locked = not map.tiles[y][x].locked
+                        if not map.tiles[y][x].locked:
+                            map.tiles[y][x].possibles = [True]*4
+                            map.tiles[y][x].necessaries = [False]*4
+                    window.draw()
+                    pygame.display.flip()
+            else:
+                tile_rel_x = int(round(rel_x/50.0))
+                tile_rel_y = int(round(rel_y/50.0))
+                if tile_rel_x != last_temp_scroll_x or tile_rel_y != last_temp_scroll_y:
+                    window.scroll(tile_rel_x - last_temp_scroll_x, tile_rel_y - last_temp_scroll_y)
+                    window.draw()
+                    pygame.display.flip()
+            click_pos = None
         elif ev.type == pygame.USEREVENT+1:
+            if click_pos is not None:
+                click_pos2 = pygame.mouse.get_pos()
+                rel_x = click_pos[0] - click_pos2[0] 
+                rel_y = click_pos[1] - click_pos2[1] 
+                tile_rel_x = int(round(rel_x/50.0))
+                tile_rel_y = int(round(rel_y/50.0))
+                if tile_rel_x != last_temp_scroll_x or tile_rel_y != last_temp_scroll_y:
+                    window.scroll(tile_rel_x - last_temp_scroll_x, tile_rel_y - last_temp_scroll_y)
+                    window.draw()
+                    pygame.display.flip()
+                    last_temp_scroll_x, last_temp_scroll_y = tile_rel_x, tile_rel_y
+            
             if auto_solve:
                 auto_solve = ai.solve_one()
             if map.update():
