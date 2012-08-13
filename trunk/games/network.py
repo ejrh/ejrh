@@ -308,7 +308,21 @@ class Window(object):
         self.draw_map()
         #pygame.image.save(self.display, 'network%04d.png' % self.frame)
         self.frame += 1
-
+    
+    def get_wire_colour(self, tile):        
+        a = []
+        for i in range(3):
+            c = tile.heat[i]
+            n = self.frame % 20
+            if n > 10:
+                f = 1-((n-10)/10.0)
+            else:
+                f = n/10.0
+            if tile.heat[i] >= tile.prev_heat[i]:
+                f = 1
+            a.append(int(c * f * 255))
+        return tuple(a)
+    
     def draw_tile(self, tile, row, col):
         if tile is None or not any(tile.ports):
             pygame.draw.rect(self.display, (50, 50, 100), pygame.Rect(col*50+1, row*50+1, 48, 48))
@@ -317,7 +331,7 @@ class Window(object):
             pygame.draw.rect(self.display, (50, 100, 150), pygame.Rect(col*50+1, row*50+1, 48, 48))
         else:
             pygame.draw.rect(self.display, (150, 100, 50), pygame.Rect(col*50+1, row*50+1, 48, 48))
-        wire_col = [tile.heat[0]*255, tile.heat[1]*255, tile.heat[2]*255]
+        wire_col = self.get_wire_colour(tile)
         if tile.ports[0]:
             pygame.draw.rect(self.display, wire_col, pygame.Rect(col*50+21, row*50+1, 8, 24))
         if tile.ports[1]:
@@ -355,7 +369,7 @@ class Window(object):
         if tile.mark:
             bg_col = (255, 255, 255)
         pygame.draw.rect(self.display, bg_col, pygame.Rect(col*6+offset_x, row*6+offset_y, 6, 6))
-        wire_col = [tile.heat[0]*255, tile.heat[1]*255, tile.heat[2]*255]
+        wire_col = self.get_wire_colour(tile)
         if tile.ports[0]:
             pygame.draw.rect(self.display, wire_col, pygame.Rect(col*6+offset_x+2, row*6+offset_y, 2,4))
         if tile.ports[1]:
@@ -686,6 +700,8 @@ def main(args=None):
             last_temp_scroll_x, last_temp_scroll_y = 0, 0
         elif ev.type == pygame.MOUSEBUTTONUP:
             click_pos2 = ev.pos
+            if click_pos is None:
+                click_pos = click_pos2
             rel_x = click_pos[0] - click_pos2[0] 
             rel_y = click_pos[1] - click_pos2[1] 
             if abs(rel_x) < 5 and abs(rel_y) < 5:
