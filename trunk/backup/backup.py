@@ -236,6 +236,7 @@ class Backup(object):
     
     def backup_item(self, item_path):
         if self.is_excluded(item_path):
+            self.notifier.notice('Excluded: %s' % item_path)
             return
         
         if self.is_reusable(item_path):
@@ -269,6 +270,10 @@ class Backup(object):
         try:
             f = open(os.path.join(self.target, EXCLUSIONS_FILENAME), 'rt')
             for line in f:
+                line = line.strip()
+                if line == '':
+                    continue
+                
                 self.exclusions.add(line)
             f.close()
             self.notifier.notice('Read %d exclusions' % len(self.exclusions))
