@@ -241,6 +241,7 @@ class Backup(object):
         if self.is_reusable(item_path):
             try:
                 self.reuse_item(item_path)
+                self.notifier.notice('Reused: %s' % item_path)
                 return
             except Exception:
                 self.notifier.notice('Falling back to copy')
@@ -347,7 +348,7 @@ def main(args=None):
     backup.source = args[1]
     backup.target = args[2]
     backup.name = args[3]
-    #backup.enable_dir_reuse = True
+    backup.enable_dir_reuse = True
     if not ALLOW_JOURNAL:
         backup.enable_journal = False
     backup.run()
