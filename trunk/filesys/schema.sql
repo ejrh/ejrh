@@ -16,10 +16,10 @@ CREATE USER localuser PASSWORD 'localuser';
 
 GRANT USAGE ON SCHEMA public, extra, contrib TO localuser;
 
-UPDATE pg_database
-SET datconfig = '{"search_path=$user,public,extra,contrib"}'
-WHERE datname = current_database();
-
+INSERT INTO pg_db_role_setting
+SELECT pg_database.oid, pg_roles.oid, '{"search_path=$user,public,extra,contrib"}'
+FROM pg_database, pg_roles
+WHERE pg_database.datname = current_database() AND pg_roles.rolname = 'localuser';
 
 CREATE TABLE file
 (
