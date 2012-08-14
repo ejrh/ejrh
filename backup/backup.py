@@ -36,6 +36,8 @@ import os
 import os.path
 import cPickle
 import hashlib
+import time
+from optparse import OptionParser
 
 import links
 
@@ -94,7 +96,7 @@ class Backup(object):
         self.name = None
         self.source = None
         self.target = None
-        self.enable_journal = True
+        self.enable_journal = False
         self.enable_dir_reuse = False
     
     def get_md5(self, source_path):
@@ -342,20 +344,40 @@ class Backup(object):
         pickle_to_file(self.name, prev_filename)
 
 
+def parse_command_line(argv=None):
+    parser = OptionParser(usage="%prog [options] SOURCE TARGET\n       %prog -h (for help)", add_help_option=True)
+    parser.add_option("-n", "--name", default=None, action='store',
+                      help="name of backup (defaults to date)")
+    parser.add_option("-j", "--use-journal", default=False, action='store_true',
+                      help="use USN journal")
+    options, args = parser.parse_args(argv[1:])
+
+    if len(args) != 2:
+        parser.error('Source and target arguments required')
+    
+    if options.use_journal and not ALLOW_JOURNAL:
+        parser.error('Journal cannot be used on this system')
+    
+    return options, args
+
+
 def main(args=None):
     if args is None:
         args = sys.argv
+    
+    options, args = parse_command_line(args)
+    
     backup = Backup()
     backup.notifier = ConsoleNotifier(backup)
-    if len(args) != 4:
-        raise Exception, "Command line: backup.py SOURCE TARGET NAME"
-    #TODO parse options to set these
-    backup.source = args[1]
-    backup.target = args[2]
-    backup.name = args[3]
+    backup.source = args[0]
+    backup.target = args[1]
+    if options.name is not None:
+        backup.name = options.name
+    else:
+        backup.name = time.strftime('%Y%m%d')
     backup.enable_dir_reuse = True
-    if not ALLOW_JOURNAL:
-        backup.enable_journal = False
+    if options.use_journal:
+        backup.enable_journal = True
     backup.run()
 
 
