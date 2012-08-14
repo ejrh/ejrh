@@ -135,6 +135,11 @@ class Importer(object):
                 item.actual_path = chr(i) + ':' + '/'
                 item.is_dir = True
                 item.is_drive = True
+                
+                if self.ignore_re.search(item.path) or self.ignore_re2.search(item.path):
+                    print 'Ignoring %s' % item.path
+                    continue
+                
                 list.append(item)
             list.sort(key=(lambda i: i.name))
             return list
