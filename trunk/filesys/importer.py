@@ -1,16 +1,12 @@
 import sys
-import os, stat, time, tempfile
+import time
 import math
 import hashlib, codecs
-import string, re
+import re
+import os, tempfile
 import Image, ImageStat, ImageMath
+
 from database import Connection, TransactionRollbackError
-import platform
-import socket
-from optparse import OptionParser
-
-
-WINDOWS = (platform.system() == 'Windows')
 
 
 def exception_info(msg, exc):
@@ -39,15 +35,16 @@ class Item(object):
 
 
 class Importer(object):
-    def __init__(self):
+    def __init__(self, model):
         self.db = None
+        self.model = model
 
 
     def prepare_queries(self):
         self.db.prepare("""PREPARE bulk_find_duplicates(name_size_modified[]) AS SELECT
                 orig_name, id, name, size, modified, md5
             FROM
-                find_duplicates($1) AS fd(orig_name VARCHAR, id INTEGER, name VARCHAR, size BIGINT, modified TIMESTAMP, md5 VARCHAR)""")
+                find_duplicates($1) AS fd(orig_name VARCHAR, id FileId, name VARCHAR, size BIGINT, modified TIMESTAMP, md5 VARCHAR)""")
 
         self.db.prepare("""PREPARE find_image_dups(VARCHAR) AS SELECT
                i.id,
@@ -115,80 +112,14 @@ class Importer(object):
 
 
     def get_list(self, path):
-        list = []
-        
-        if path in ['']:
-            item = Item()
-            item.name = self.hostname
-            item.path = '/' + self.hostname
-            item.actual_path = '/'
-            item.is_dir = True
-            item.is_drive = True
-            list.append(item)
-            return list
-        
-        if  WINDOWS and path == '/' + self.hostname:
-            for i in range(ord('A'), ord('Z')+1):
-                item = Item()
-                item.name = chr(i) + ':'
-                item.path = '/' + self.hostname + '/' + chr(i) + ':'
-                item.actual_path = chr(i) + ':' + '/'
-                item.is_dir = True
-                item.is_drive = True
-                
-                if self.ignore_re.search(item.path) or self.ignore_re2.search(item.path):
-                    print 'Ignoring %s' % item.path
-                    continue
-                
-                list.append(item)
-            list.sort(key=(lambda i: i.name))
-            return list
-        
-        actual_path = path[len('/' + self.hostname):]
-        if WINDOWS:
-            if self.drive_re.search(actual_path):
-                actual_path = actual_path + '/'
-            if self.leading_slash_re.search(actual_path):
-                actual_path = actual_path[1:]
-        
-        if actual_path == '':
-            actual_path = '/'
-        
-        try:
-            l = os.listdir(actual_path)
-        except OSError, inst:
-            exception_info("Couldn't list directory '%s'" % actual_path, inst)
-            return []
-        
-        for name in l:
-            item  = Item()
-            try:
-                item.name = self.fs_decode(name)[0]
-            except UnicodeDecodeError, inst:
-                exception_info("Couldn't decode '%s'!" % name, inst)
-                raise
-            item.path = path + '/' + name
-            item.actual_path = os.path.join(actual_path, name)
+        items = []
+        for item in self.model.get_list(path):
             if self.ignore_re.search(item.path) or self.ignore_re2.search(item.path):
                 print 'Ignoring %s' % item.path
                 continue
-            try:
-                statinfo = os.lstat(item.actual_path)
-            except OSError, inst:
-                exception_info("Couldn't stat '%s'" % item.actual_path, inst)
-                continue
-            if not stat.S_ISREG(statinfo[stat.ST_MODE]) and not stat.S_ISDIR(statinfo[stat.ST_MODE]):
-                continue
-            item.size = statinfo.st_size
-            try:
-                item.modified = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(statinfo.st_mtime))
-            except ValueError:
-                item.modified = 'epoch'
-            item.is_dir = stat.S_ISDIR(statinfo[stat.ST_MODE])
-            item.is_drive = False
-            list.append(item)
-        list.sort(key=(lambda i: i.name))
-        return list
+            items.append(item)
+        items.sort(key=(lambda i: i.name))
+        return items
 
 
     def process_duplicates(self, item, dupes):
@@ -259,29 +190,12 @@ class Importer(object):
         return item
 
 
-    def get_file_md5(self, path):
-        try:
-            fd = open(path, 'rb')
-            m = hashlib.md5()
-            BUFSIZE = 65536
-            while True:
-                buf = fd.read(BUFSIZE)
-                m.update(buf)
-                if len(buf) == 0:
-                    break
-            fd.close()
-            return m.hexdigest()
-        except Exception, inst:
-            exception_info("Failed getting MD5 of %s" % path, inst)
-            return None
-
-
     def import_image(self, filename, md5):
         
         # Look for existing images in the DB with matching md5, etc.
         # If a match is found, just re that one.
         if md5 == None:
-            md5 = self.get_file_md5(filename)
+            md5 = self.model.get_file_md5(filename)
         if md5 == None:
             return None
         
@@ -408,7 +322,7 @@ class Importer(object):
             if not self.no_md5_re.search(item.path):
                 if item.size > 100000000:
                     print "(Reading item %s of size %d)" % (item.actual_path, item.size)
-                item.md5 = self.get_file_md5(item.actual_path)
+                item.md5 = self.model.get_file_md5(item.actual_path)
             else:
                 print "Skipping md5 for %s" % item.path
                 item.md5 = None
@@ -515,13 +429,6 @@ class Importer(object):
         if len(rows) == 1:
             item.id = rows[0]['id']
         else:
-            # If it's a drive, try to get drive info.
-            if item.is_drive:
-                try:
-                    import win32file
-                    dummy,item.total_space,item.free_space = win32file.GetDiskFreeSpaceEx(item.actual_path)
-                except:
-                    item.total_space,item.free_space = None,None
             item = self.insert_directory(item, child_ids)
         
         item.md5line = "%s\t%s\n" % (item.name, item.md5)
@@ -565,16 +472,7 @@ class Importer(object):
         root_item.path = path
         root_item.name = path
         
-        os.stat_float_times(False)
-        
-        if WINDOWS:
-            fs_codec = 'latin_1'
-            db_codec = 'utf_8'
-        else:
-            fs_codec = 'utf_8'
-            db_codec = 'utf_8'
-        self.fs_decode = codecs.getdecoder(fs_codec)
-        self.fs_encode = codecs.getencoder(fs_codec)
+        db_codec = 'utf_8'
         self.db_decode = codecs.getdecoder(db_codec)
         self.db_encode = codecs.getencoder(db_codec)
         
@@ -589,15 +487,11 @@ class Importer(object):
         self.read_config()
         self.prepare_queries()
 
-        self.drive_re = re.compile('[A-Za-z]:$')
-        self.leading_slash_re = re.compile('^/')
         self.ignore_re = re.compile(self.ignore_regex)
         self.ignore_re2 = re.compile(self.ignore_regex_i, re.IGNORECASE)
         self.no_md5_re = re.compile(self.no_md5_regex)
         self.image_re = re.compile('\\.(png|jpg|jpe|jpeg|bmp|gif)$', re.IGNORECASE)
         
-        self.hostname = socket.gethostname()
-
         self.begin()
         root_item = self.try_import_dir(root_item, top_level=True)
         
@@ -606,21 +500,3 @@ class Importer(object):
         self.db.commit()
         
         return root_item
-
-
-if __name__ == "__main__":
-    usage = """usage: %prog PATH [--host DB_HOST]"""
-    desc = """Import a directory into the filesystem database."""
-    parser = OptionParser(usage=usage, description=desc)
-    parser.add_option("--host", metavar="DB_HOST",
-                      action="store", dest="db_host",
-                      help="specify the host of the filesys database")
-
-    options, args = parser.parse_args()
-    if len(args) == 0:
-        path = ''
-    else:
-        path = args[0]
-    
-    i = Importer()
-    i.run(path, options.db_host)
