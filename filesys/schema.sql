@@ -21,6 +21,10 @@ SELECT pg_database.oid, pg_roles.oid, '{"search_path=$user,public,extra,contrib"
 FROM pg_database, pg_roles
 WHERE pg_database.datname = current_database() AND pg_roles.rolname = 'localuser';
 
+CREATE DOMAIN RevisionId AS INTEGER;
+CREATE DOMAIN FileId AS INTEGER;
+CREATE DOMAIN ImageId AS INTEGER;
+
 CREATE TABLE file
 (
     id SERIAL NOT NULL,
@@ -44,7 +48,7 @@ CREATE INDEX file_ix_lower_name ON file (lower(name));
 
 CREATE TABLE directory
 (
-    id INTEGER NOT NULL,
+    id FileId NOT NULL,
     children INTEGER NOT NULL,
     descendants INTEGER NOT NULL,
     
@@ -61,7 +65,7 @@ CLUSTER directory_pk_id ON directory;
 
 CREATE TABLE drive
 (
-    id INTEGER NOT NULL,
+    id FileId NOT NULL,
     free_space BIGINT,
     total_space BIGINT,
     
@@ -79,9 +83,9 @@ CLUSTER drive_pk_id ON drive;
 
 CREATE TABLE revision
 (
-    rev_id INTEGER NOT NULL,
+    rev_id RevisionId NOT NULL,
     time TIMESTAMP NOT NULL,
-    root_id INTEGER NOT NULL,
+    root_id FileId NOT NULL,
     
     CONSTRAINT revision_pk_rev_id PRIMARY KEY (rev_id),
     
@@ -97,8 +101,8 @@ CREATE INDEX revision_ix_root_id ON revision (root_id);
 
 CREATE TABLE file_in_dir
 (
-    file_id INTEGER NOT NULL,
-    dir_id INTEGER NOT NULL,
+    file_id FileId NOT NULL,
+    dir_id FileId NOT NULL,
     
     CONSTRAINT file_in_dir_pk_dir_id_file_id PRIMARY KEY (dir_id, file_id),
     
@@ -148,7 +152,7 @@ CLUSTER image_pk_id ON image;
 
 CREATE TABLE extra.thumbnail
 (
-    id INT NOT NULL,
+    id ImageId NOT NULL,
     thumbnail BYTEA,
     
     CONSTRAINT thumbnail_pk_id PRIMARY KEY (id),
@@ -160,8 +164,8 @@ CREATE TABLE extra.thumbnail
 
 CREATE TABLE file_is_image
 (
-    file_id INTEGER NOT NULL,
-    image_id INTEGER NOT NULL,
+    file_id FileId NOT NULL,
+    image_id ImageId NOT NULL,
     
     CONSTRAINT file_is_image_pk_file_id PRIMARY KEY (file_id),
     
@@ -201,7 +205,7 @@ INSERT INTO image_weights DEFAULT VALUES;
 
 CREATE TABLE orphan
 (
-    id INTEGER,
+    id FileId,
     CONSTRAINT orphan_pk_id PRIMARY KEY (id),
     CONSTRAINT orphan_fk_id FOREIGN KEY (id) REFERENCES file (id) ON DELETE CASCADE
 ) WITHOUT OIDS;
@@ -211,8 +215,8 @@ CLUSTER orphan_pk_id ON orphan;
 
 CREATE TABLE deleted
 (
-    id INTEGER,
-    duplicate_of INTEGER,
+    id FileId,
+    duplicate_of FileId,
     
     CONSTRAINT deleted_pk_id PRIMARY KEY (id),
     
@@ -258,6 +262,11 @@ GRANT SELECT,UPDATE ON
 TO localuser;
 
 
+CREATE TYPE rev_path AS (rev_id int4, path text);
+
+CREATE TYPE name_size_modified AS (name TEXT, size BIGINT, modified TIMESTAMP);
+
+
 -- This aggregate returns the concatenatation of text strings.
 -- Since the order in which each string is encountered can make a
 -- difference to the final result, it's kind of an incorrect use of
@@ -271,7 +280,7 @@ CREATE AGGREGATE strsum
 
 -- Because they're mutually recursive, we need to make a dummy function
 -- for "bootstrapping" the function definitions.
-CREATE OR REPLACE FUNCTION dirmd5(INTEGER)
+CREATE OR REPLACE FUNCTION dirmd5(FileId)
 RETURNS CHAR(32) LANGUAGE 'sql' IMMUTABLE STRICT
 AS $$SELECT '42'::TEXT$$;
 
@@ -281,7 +290,7 @@ AS $$SELECT '42'::TEXT$$;
 
 -- Return a string for a file or directory with id = $1, of the form
 -- "name\tsize\tmodified\n" or "name\tmd5\n" (for directories).
-CREATE OR REPLACE FUNCTION childstr(INTEGER)
+CREATE OR REPLACE FUNCTION childstr(FileId)
 RETURNS TEXT LANGUAGE 'sql' IMMUTABLE STRICT
 AS $$SELECT name || E'\t' ||
      (CASE WHEN d.id IS NOT NULL
@@ -294,7 +303,7 @@ AS $$SELECT name || E'\t' ||
      FROM file AS f NATURAL LEFT JOIN directory AS d
      WHERE f.id = $1$$;
 
-CREATE OR REPLACE FUNCTION allchildstrs(INTEGER)
+CREATE OR REPLACE FUNCTION allchildstrs(FileId)
 RETURNS TEXT LANGUAGE 'sql' IMMUTABLE STRICT
 AS $$SELECT strsum(cs)
      FROM (SELECT childstr(file_id) AS cs
@@ -304,19 +313,19 @@ AS $$SELECT strsum(cs)
 -- Return an even longer string consisting of the name of the
 -- directory identified by id = $1, followed by '\n', together with
 -- the allchildstrs() string for that directory.
-CREATE OR REPLACE FUNCTION dirstr(INTEGER)
+CREATE OR REPLACE FUNCTION dirstr(FileId)
 RETURNS TEXT LANGUAGE 'sql' IMMUTABLE STRICT
 AS $$SELECT name || E'\n' || COALESCE(allchildstrs($1),'')
      FROM file WHERE id = $1$$;
 
 -- Return the MD5 for the directory id = $1.
-CREATE OR REPLACE FUNCTION dirmd5(INTEGER)
+CREATE OR REPLACE FUNCTION dirmd5(FileId)
 RETURNS CHAR(32) LANGUAGE 'sql' IMMUTABLE STRICT
 AS $$SELECT md5(dirstr($1))$$;
 
 
 -- Return a set of all descendants of this directory.
-CREATE OR REPLACE FUNCTION all_children(INTEGER) RETURNS SETOF INTEGER
+CREATE OR REPLACE FUNCTION all_children(FileId) RETURNS SETOF FileId
 LANGUAGE 'plpgsql' STABLE STRICT AS
 $$
 DECLARE
@@ -342,7 +351,7 @@ $$;
 -- Return the set of all paths to this file id, where each path is an
 -- array of parent ids, the first of which is the id of a root, and the
 -- last of which is id.
-CREATE OR REPLACE FUNCTION all_paths(INTEGER) RETURNS SETOF INTEGER[]
+CREATE OR REPLACE FUNCTION all_paths(FileId) RETURNS SETOF INTEGER[]
 LANGUAGE 'plpgsql' STABLE STRICT AS
 $$
 DECLARE
@@ -411,22 +420,22 @@ $$;
 
 -- get_free_id(min)
 -- Returns a free file id > than min.
-CREATE OR REPLACE FUNCTION get_free_id(INTEGER) RETURNS INTEGER
+CREATE OR REPLACE FUNCTION get_free_id(FileId) RETURNS FileId
 VOLATILE
 STRICT
 LANGUAGE 'sql' AS
 $$
-    SELECT f.id+1 FROM file AS f WHERE f.id > $1 AND NOT EXISTS (SELECT id FROM file WHERE id = f.id+1) LIMIT 1;
+    SELECT (f.id+1)::FileId FROM file AS f WHERE f.id > $1 AND NOT EXISTS (SELECT id FROM file WHERE id = f.id+1) LIMIT 1;
 $$;
 
 -- copy_dir(id)
-CREATE OR REPLACE FUNCTION copy_dir(INTEGER) RETURNS INTEGER
+CREATE OR REPLACE FUNCTION copy_dir(FileId) RETURNS FileId
 VOLATILE
 STRICT
 LANGUAGE 'plpgsql' AS
 $$
 DECLARE
-    new_id INTEGER;
+    new_id FileId;
 BEGIN
     SELECT INTO new_id get_free_id($1);
     INSERT INTO file (id, name, md5, size) SELECT new_id, name, 'new-' || new_id, size FROM file WHERE id = $1;
@@ -468,7 +477,7 @@ CREATE OR REPLACE FUNCTION file_in_dir_uq_name_trig() RETURNS trigger
 LANGUAGE 'plpgsql'
 AS $$
 DECLARE
-    conflict_id INTEGER;
+    conflict_id FileId;
 BEGIN
     IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') AND TG_RELNAME = 'file_in_dir' THEN
         -- Look and see if there's already a row with this (dir_id, name).
@@ -614,11 +623,11 @@ $$;
 
 -- Replace all references to $1 with $2, and delete $1.  If necessary, this
 -- may mean reusing $1's id (if it's the lesser of them).
-CREATE OR REPLACE FUNCTION replace_file(INTEGER, INTEGER) RETURNS INTEGER
+CREATE OR REPLACE FUNCTION replace_file(FileId, FileId) RETURNS FileId
 LANGUAGE 'plpgsql' VOLATILE STRICT AS
 $$
 DECLARE
-    min_id INTEGER;
+    min_id FileId;
     vals RECORD;
 BEGIN
     IF $1 = $2 THEN
@@ -652,14 +661,14 @@ END;
 $$;
 
 
-CREATE OR REPLACE FUNCTION merge_revisions(INTEGER, INTEGER) RETURNS INTEGER
+CREATE OR REPLACE FUNCTION merge_revisions(RevisionId, RevisionId) RETURNS INTEGER
 LANGUAGE 'plpgsql' VOLATILE STRICT AS
 $$
 DECLARE
-    min_id INTEGER;
-    max_id INTEGER;
-    min_root INTEGER;
-    max_root INTEGER;
+    min_id RevisionId;
+    max_id RevisionId;
+    min_root FileId;
+    max_root FileId;
 BEGIN
     IF $1 = $2 THEN
         RETURN $1;
@@ -682,17 +691,14 @@ END;
 $$;
 
 
-CREATE TYPE rev_path AS (rev_id int4, path text);
-
-
 -- Quickly show the revisions and paths for a given file.
 CREATE OR REPLACE FUNCTION show_paths(TEXT) RETURNS SETOF rev_path
 LANGUAGE 'sql' STABLE AS
 $$
-    SELECT rev_id,make_text_path(all_paths) AS path FROM all_paths(ARRAY(SELECT id FROM file WHERE lower(name) = lower($1))) LEFT JOIN revision ON root_id = all_paths[1];
+    SELECT rev_id,make_text_path(all_paths) AS path FROM all_paths(ARRAY(SELECT id::integer FROM file WHERE lower(name) = lower($1))) LEFT JOIN revision ON root_id = all_paths[1];
 $$;
 
-CREATE OR REPLACE FUNCTION show_paths(INTEGER) RETURNS SETOF rev_path
+CREATE OR REPLACE FUNCTION show_paths(FileId) RETURNS SETOF rev_path
 LANGUAGE 'sql' STABLE AS
 $$
     SELECT rev_id,make_text_path(all_paths) AS path FROM all_paths($1) LEFT JOIN revision ON root_id = all_paths[1];
@@ -740,13 +746,13 @@ LANGUAGE 'plpgsql' AS
 $$
 DECLARE
     num INTEGER;
-    first_id INTEGER;
-    closing_id INTEGER;
+    first_id FileId;
+    closing_id FileId;
     done INTEGER;
     total_count INTEGER;
-    gap_id INTEGER;
+    gap_id FileId;
     gap_size INTEGER;
-    next_gap_id INTEGER;
+    next_gap_id FileId;
     filer RECORD;
     percent INTEGER;
 BEGIN
@@ -791,12 +797,12 @@ END;
 $$;
 
 
-CREATE OR REPLACE FUNCTION inherit_drive(drive_name TEXT, rev INTEGER) RETURNS INTEGER
+CREATE OR REPLACE FUNCTION inherit_drive(drive_name TEXT, rev RevisionId) RETURNS FileId
 VOLATILE STRICT
 LANGUAGE 'plpgsql' AS
 $$
 DECLARE
-    drive_id INTEGER;
+    drive_id FileId;
 BEGIN
     SELECT INTO drive_id f.id
         FROM file AS f
@@ -819,9 +825,6 @@ END;
 $$;
 
 
-CREATE TYPE name_size_modified AS (name TEXT, size BIGINT, modified TIMESTAMP);
-
-
 CREATE OR REPLACE FUNCTION find_duplicates(name_size_modified[]) RETURNS SETOF RECORD
 STABLE STRICT
 LANGUAGE 'plpgsql'
@@ -840,7 +843,7 @@ END;
 $$;
 
 
-CREATE OR REPLACE FUNCTION all_file_in_dirs(INTEGER) RETURNS SETOF file_in_dir
+CREATE OR REPLACE FUNCTION all_file_in_dirs(FileId) RETURNS SETOF file_in_dir
 STABLE LANGUAGE 'sql'
 AS $$
     WITH RECURSIVE w(file_id, dir_id) AS
