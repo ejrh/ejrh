@@ -268,6 +268,35 @@ static GALAXY *create_disc_galaxy(double radius, int num)
     return g;
 }
 
+static GALAXY *create_square_galaxy(double radius, int num)
+{
+    int i;
+    
+    GALAXY *g = create_galaxy();
+    STAR *s0, *s1;
+
+    for (i = 0; i < num; i++)
+    {
+        STAR *s = create_star();
+        s->mass = 1E18;
+        s->pos[0] = rand_float(-radius, radius);
+        s->pos[1] = rand_float(-radius, radius);
+        s->pos[2] = 0.0;
+        s->vel[0] = 0.0;
+        s->vel[1] = 0.0;
+        s->vel[2] = 0.0;
+        s->radius = rand_float(1.5E8, 2.5E8);
+        s->rgb[0] = 128+127*(s->pos[0]/radius);
+        s->rgb[1] = 128+127*(s->pos[1]/radius);
+        s->rgb[2] = rand() % 256;
+        add_star(g, s);
+    }
+    
+    g->radius = radius;
+    
+    return g;
+}
+
 static void put_pixel(unsigned char *buffer, int px, int py, int width, int height, unsigned char *rgb)
 {
     if (px >= 0 && px < width && py >= 0 && py < height)
@@ -383,7 +412,8 @@ int main(int argc, char *argv[])
     }
         
     //GALAXY *g = create_solar_system_2();
-    g = create_disc_galaxy(2.5E11, 5000);
+    //g = create_disc_galaxy(2.5E11, 5000);
+    g = create_square_galaxy(2.5E11, 1000);
     
     #define SECONDS_PER_YEAR 365.242199*24*3600
     
