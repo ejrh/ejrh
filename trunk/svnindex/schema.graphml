@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:y="http://www.yworks.com/xml/graphml" xmlns:yed="http://www.yworks.com/xml/yed/3" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd">
+  <!--Created by yFiles for Java 2.9-->
+  <key for="graphml" id="d0" yfiles.type="resources"/>
+  <key for="port" id="d1" yfiles.type="portgraphics"/>
+  <key for="port" id="d2" yfiles.type="portgeometry"/>
+  <key for="port" id="d3" yfiles.type="portuserdata"/>
+  <key attr.name="url" attr.type="string" for="node" id="d4"/>
+  <key attr.name="description" attr.type="string" for="node" id="d5"/>
+  <key for="node" id="d6" yfiles.type="nodegraphics"/>
+  <key attr.name="Description" attr.type="string" for="graph" id="d7"/>
+  <key attr.name="url" attr.type="string" for="edge" id="d8"/>
+  <key attr.name="description" attr.type="string" for="edge" id="d9"/>
+  <key for="edge" id="d10" yfiles.type="edgegraphics"/>
+  <graph edgedefault="directed" id="G">
+    <data key="d7"/>
+    <node id="n0">
+      <data key="d6">
+        <y:GenericNode configuration="com.yworks.entityRelationship.big_entity">
+          <y:Geometry height="146.0" width="139.0" x="5.5" y="152.0"/>
+          <y:Fill color="#E8EEF7" color2="#B7C9E3" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" backgroundColor="#B7C9E3" configuration="com.yworks.entityRelationship.label.name" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasLineColor="false" height="18.701171875" modelName="internal" modelPosition="t" textColor="#000000" visible="true" width="45.349609375" x="46.8251953125" y="4.0">revision</y:NodeLabel>
+          <y:NodeLabel alignment="left" autoSizePolicy="content" configuration="com.yworks.entityRelationship.label.attributes" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="114.0" modelName="custom" textColor="#000000" visible="true" width="136.0" x="2.0" y="30.701171875">&lt;html&gt;
+&lt;table&gt;
+&lt;tr&gt;&lt;td&gt;&lt;u&gt;repos_id&lt;/u&gt;&lt;/td&gt;&lt;td&gt;integer&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;u&gt;rev&lt;/u&gt;&lt;/td&gt;&lt;td&gt;integer&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;svn_author&lt;/td&gt;&lt;td&gt;varchar&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;svn_date&lt;/td&gt;&lt;td&gt;timestamp&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;svn_log&lt;/td&gt;&lt;td&gt;varchar&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;<y:LabelModel>
+              <y:ErdAttributesNodeLabelModel/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:ErdAttributesNodeLabelModelParameter/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+          <y:StyleProperties>
+            <y:Property class="java.lang.Boolean" name="y.view.ShadowNodePainter.SHADOW_PAINTING" value="true"/>
+          </y:StyleProperties>
+        </y:GenericNode>
+      </data>
+    </node>
+    <node id="n1">
+      <data key="d6">
+        <y:GenericNode configuration="com.yworks.entityRelationship.big_entity">
+          <y:Geometry height="389.0" width="158.0" x="-4.0" y="355.5"/>
+          <y:Fill color="#E8EEF7" color2="#B7C9E3" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" backgroundColor="#B7C9E3" configuration="com.yworks.entityRelationship.label.name" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasLineColor="false" height="18.701171875" modelName="internal" modelPosition="t" textColor="#000000" visible="true" width="30.6953125" x="63.65234375" y="4.0">node</y:NodeLabel>
+          <y:NodeLabel alignment="left" autoSizePolicy="content" configuration="com.yworks.entityRelationship.label.attributes" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="356.0" modelName="custom" textColor="#000000" visible="true" width="149.0" x="2.0" y="30.701171875">&lt;html&gt;
+&lt;table&gt;
+&lt;tr&gt;&lt;td&gt;&lt;u&gt;id&lt;/u&gt;&lt;/td&gt;&lt;td&gt;integer&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;repos_id&lt;/td&gt;&lt;td&gt;integer&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;rev&lt;/td&gt;&lt;td&gt;integer&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;path&lt;/td&gt;&lt;td&gt;varchar&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;kind&lt;/td&gt;&lt;td&gt;varchar&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;action&lt;/td&gt;&lt;td&gt;varchar&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;name&lt;/td&gt;&lt;td&gt;varchar&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;parent_id&lt;/td&gt;&lt;td&gt;integer&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;predecessor_id&lt;/td&gt;&lt;td&gt;integer&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;copyfrom_rev&lt;/td&gt;&lt;td&gt;integer&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;copyfrom_path&lt;/td&gt;&lt;td&gt;varchar&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;props_id&lt;/td&gt;&lt;td&gt;integer&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;text_id&lt;/td&gt;&lt;td&gt;integer&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;size&lt;/td&gt;&lt;td&gt;integer&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;md5&lt;/td&gt;&lt;td&gt;char(32)&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;children&lt;/td&gt;&lt;td&gt;integer[]&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;<y:LabelModel>
+              <y:ErdAttributesNodeLabelModel/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:ErdAttributesNodeLabelModelParameter/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+          <y:StyleProperties>
+            <y:Property class="java.lang.Boolean" name="y.view.ShadowNodePainter.SHADOW_PAINTING" value="true"/>
+          </y:StyleProperties>
+        </y:GenericNode>
+      </data>
+    </node>
+    <node id="n2">
+      <data key="d6">
+        <y:GenericNode configuration="com.yworks.entityRelationship.big_entity">
+          <y:Geometry height="101.0" width="106.0" x="22.0" y="799.5"/>
+          <y:Fill color="#E8EEF7" color2="#B7C9E3" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" backgroundColor="#B7C9E3" configuration="com.yworks.entityRelationship.label.name" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasLineColor="false" height="18.701171875" modelName="internal" modelPosition="t" textColor="#000000" visible="true" width="28.017578125" x="38.9912109375" y="4.0">prop</y:NodeLabel>
+          <y:NodeLabel alignment="left" autoSizePolicy="content" configuration="com.yworks.entityRelationship.label.attributes" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="70.0" modelName="custom" textColor="#000000" visible="true" width="101.0" x="2.0" y="30.701171875">&lt;html&gt;
+&lt;table&gt;
+&lt;tr&gt;&lt;td&gt;&lt;u&gt;node_id&lt;/u&gt;&lt;/td&gt;&lt;td&gt;integer&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;u&gt;name&lt;/u&gt;&lt;/td&gt;&lt;td&gt;varchar&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;value&lt;/td&gt;&lt;td&gt;varchar&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;<y:LabelModel>
+              <y:ErdAttributesNodeLabelModel/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:ErdAttributesNodeLabelModelParameter/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+          <y:StyleProperties>
+            <y:Property class="java.lang.Boolean" name="y.view.ShadowNodePainter.SHADOW_PAINTING" value="true"/>
+          </y:StyleProperties>
+        </y:GenericNode>
+      </data>
+    </node>
+    <node id="n3">
+      <data key="d6">
+        <y:GenericNode configuration="com.yworks.entityRelationship.big_entity">
+          <y:Geometry height="188.0" width="106.0" x="197.0" y="131.0"/>
+          <y:Fill color="#E8EEF7" color2="#B7C9E3" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" backgroundColor="#B7C9E3" configuration="com.yworks.entityRelationship.label.name" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasLineColor="false" height="18.701171875" modelName="internal" modelPosition="t" textColor="#000000" visible="true" width="56.6875" x="24.65625" y="4.0">repository</y:NodeLabel>
+          <y:NodeLabel alignment="left" autoSizePolicy="content" configuration="com.yworks.entityRelationship.label.attributes" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="158.0" modelName="custom" textColor="#000000" visible="true" width="104.0" x="2.0" y="30.701171875">&lt;html&gt;
+&lt;table&gt;
+&lt;tr&gt;&lt;td&gt;&lt;u&gt;id&lt;/u&gt;&lt;/td&gt;&lt;td&gt;integer&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;uuid&lt;/td&gt;&lt;td&gt;varchar&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;name&lt;/td&gt;&lt;td&gt;varchar&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;url&lt;/td&gt;&lt;td&gt;varchar&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;indexed&lt;/td&gt;&lt;td&gt;boolean&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;connect&lt;/td&gt;&lt;td&gt;varchar&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;tool&lt;/td&gt;&lt;td&gt;varchar&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;<y:LabelModel>
+              <y:ErdAttributesNodeLabelModel/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:ErdAttributesNodeLabelModelParameter/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+          <y:StyleProperties>
+            <y:Property class="java.lang.Boolean" name="y.view.ShadowNodePainter.SHADOW_PAINTING" value="true"/>
+          </y:StyleProperties>
+        </y:GenericNode>
+      </data>
+    </node>
+    <node id="n4">
+      <data key="d6">
+        <y:GenericNode configuration="com.yworks.entityRelationship.big_entity">
+          <y:Geometry height="76.0" width="106.0" x="222.0" y="512.0"/>
+          <y:Fill color="#E8EEF7" color2="#B7C9E3" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" backgroundColor="#B7C9E3" configuration="com.yworks.entityRelationship.label.name" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasLineColor="false" height="18.701171875" modelName="internal" modelPosition="t" textColor="#000000" visible="true" width="43.36328125" x="31.318359375" y="4.0">content</y:NodeLabel>
+          <y:NodeLabel alignment="left" autoSizePolicy="content" configuration="com.yworks.entityRelationship.label.attributes" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="48.0" modelName="custom" textColor="#000000" visible="true" width="103.0" x="2.0" y="30.701171875">&lt;html&gt;
+&lt;table&gt;
+&lt;tr&gt;&lt;td&gt;&lt;u&gt;node_id&lt;/u&gt;&lt;br&gt;&lt;/td&gt;&lt;td&gt;integer&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;vector&lt;/td&gt;&lt;td&gt;tsvector&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;<y:LabelModel>
+              <y:ErdAttributesNodeLabelModel/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:ErdAttributesNodeLabelModelParameter/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+          <y:StyleProperties>
+            <y:Property class="java.lang.Boolean" name="y.view.ShadowNodePainter.SHADOW_PAINTING" value="true"/>
+          </y:StyleProperties>
+        </y:GenericNode>
+      </data>
+    </node>
+    <node id="n5">
+      <data key="d6">
+        <y:GenericNode configuration="com.yworks.entityRelationship.big_entity">
+          <y:Geometry height="121.0" width="119.0" x="15.5" y="-10.5"/>
+          <y:Fill color="#E8EEF7" color2="#B7C9E3" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" backgroundColor="#B7C9E3" configuration="com.yworks.entityRelationship.label.name" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasLineColor="false" height="18.701171875" modelName="internal" modelPosition="t" textColor="#000000" visible="true" width="44.6875" x="37.15625" y="4.0">revprop</y:NodeLabel>
+          <y:NodeLabel alignment="left" autoSizePolicy="content" configuration="com.yworks.entityRelationship.label.attributes" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="92.0" modelName="custom" textColor="#000000" visible="true" width="105.0" x="2.0" y="30.701171875">&lt;html&gt;
+&lt;table&gt;
+&lt;tr&gt;&lt;td&gt;&lt;u&gt;repos_id&lt;/u&gt;&lt;/td&gt;&lt;td&gt;integer&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;u&gt;rev&lt;/u&gt;&lt;/td&gt;&lt;td&gt;integer&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;name&lt;/td&gt;&lt;td&gt;varchar&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;value&lt;/td&gt;&lt;td&gt;varchar&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;<y:LabelModel>
+              <y:ErdAttributesNodeLabelModel/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:ErdAttributesNodeLabelModelParameter/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+          <y:StyleProperties>
+            <y:Property class="java.lang.Boolean" name="y.view.ShadowNodePainter.SHADOW_PAINTING" value="true"/>
+          </y:StyleProperties>
+        </y:GenericNode>
+      </data>
+    </node>
+    <edge id="e0" source="n1" target="n0">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="-194.5" tx="0.0" ty="73.0"/>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="true" width="4.0" x="28.0" y="-30.721923828125">
+            <y:LabelModel>
+              <y:SmartEdgeLabelModel autoRotationEnabled="false" defaultAngle="0.0" defaultDistance="10.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartEdgeLabelModelParameter angle="0.0" distance="30.0" distanceToCenter="true" position="right" ratio="0.5" segment="0"/>
+            </y:ModelParameter>
+          </y:EdgeLabel>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e1" source="n2" target="n1">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="-50.5" tx="0.0" ty="194.5"/>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="true" width="4.0" x="28.0" y="-29.47314453125">
+            <y:LabelModel>
+              <y:SmartEdgeLabelModel autoRotationEnabled="false" defaultAngle="0.0" defaultDistance="10.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartEdgeLabelModelParameter angle="0.0" distance="30.0" distanceToCenter="true" position="right" ratio="0.5" segment="0"/>
+            </y:ModelParameter>
+          </y:EdgeLabel>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e2" source="n5" target="n0">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="60.5" tx="0.0" ty="-73.0"/>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="true" width="4.0" x="-32.0" y="18.75">
+            <y:LabelModel>
+              <y:SmartEdgeLabelModel autoRotationEnabled="false" defaultAngle="0.0" defaultDistance="10.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartEdgeLabelModelParameter angle="0.0" distance="30.0" distanceToCenter="true" position="right" ratio="0.5" segment="0"/>
+            </y:ModelParameter>
+          </y:EdgeLabel>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e3" source="n0" target="n3">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="69.5" sy="0.0" tx="-53.0" ty="0.0"/>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="true" width="4.0" x="24.25" y="28.0">
+            <y:LabelModel>
+              <y:SmartEdgeLabelModel autoRotationEnabled="false" defaultAngle="0.0" defaultDistance="10.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartEdgeLabelModelParameter angle="0.0" distance="30.0" distanceToCenter="true" position="right" ratio="0.5" segment="0"/>
+            </y:ModelParameter>
+          </y:EdgeLabel>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e4" source="n1" target="n4">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="79.0" sy="0.0" tx="-53.0" ty="0.0"/>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="true" width="4.0" x="32.0" y="28.0">
+            <y:LabelModel>
+              <y:SmartEdgeLabelModel autoRotationEnabled="false" defaultAngle="0.0" defaultDistance="10.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartEdgeLabelModelParameter angle="0.0" distance="30.0" distanceToCenter="true" position="right" ratio="0.5" segment="0"/>
+            </y:ModelParameter>
+          </y:EdgeLabel>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+  </graph>
+  <data key="d0">
+    <y:Resources/>
+  </data>
+</graphml>
