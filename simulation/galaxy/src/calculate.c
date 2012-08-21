@@ -55,6 +55,7 @@ void calculate__apply_forces(GALAXY *g, VECTOR *forces, double timestep)
 {
     int i;
     
+    #pragma omp parallel for
     for (i = 0; i < g->num; i++)
     {
         double ts = timestep;
@@ -78,6 +79,7 @@ void calculate__apply_forces(GALAXY *g, VECTOR *forces, double timestep)
 static void naive_calculator__calculate(CALCULATOR *calculator, GALAXY *galaxy, VECTOR *forces)
 {
     int i;
+    #pragma omp parallel for
     for (i = 0; i < galaxy->num; i++)
     {
         int j;
