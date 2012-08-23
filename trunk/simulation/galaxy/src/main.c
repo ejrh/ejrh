@@ -262,17 +262,17 @@ static GALAXY *create_disc_galaxy(double radius, int num)
     s0->vel[2] = 0.0;
     s0->radius = 2.5E9;
     s0->rgb[0] = 255;
-    s0->rgb[1] = 127;
-    s0->rgb[2] = 0;
+    s0->rgb[1] = 64;
+    s0->rgb[2] = 64;
     add_star(g, s0);
     
     for (i = 0; i < num; i++)
     {
         STAR *s = create_star();
         double a = rand_float(0.0, 2.0*M_PI);
-        double t = rand_float(0.0, 1.0);
+        double t = rand_float(0.04, 1.0);
         double r = sqrt(t);
-        s->mass = 1; //1E24;
+        s->mass = 1E15;
         s->pos[0] = radius * r * cos(a);
         s->pos[1] = radius * r * sin(a);
         s->pos[2] = 0.0;
@@ -280,24 +280,24 @@ static GALAXY *create_disc_galaxy(double radius, int num)
         s->vel[1] = sin(a + M_PI/2)*sqrt((GRAVITY*s0->mass)/(radius*r));
         s->vel[2] = 0.0;
         s->radius = rand_float(1.5E8, 2.5E8);
-        s->rgb[0] = 255*r;
-        s->rgb[1] = 255*(1-r);
-        s->rgb[2] = rand() % 256;
+        s->rgb[0] = 255*(1-(r-0.2)/0.8);
+        s->rgb[1] = 255*(1-(r-0.2)/0.8);
+        s->rgb[2] = 255*(r-0.2)/0.8;
         add_star(g, s);
     }
     
     s1 = create_star();
-    s1->mass = 1E24;
-    s1->pos[0] = 0;
-    s1->pos[1] = -1.2*radius;
+    s1->mass = 1E21;
+    s1->pos[0] = 0.0; //-1*radius;
+    s1->pos[1] = -1.1*radius;
     s1->pos[2] = 0.0;
-    s1->vel[0] = sqrt((GRAVITY*s0->mass)/(1.2*radius));
+    s1->vel[0] = sqrt((GRAVITY*s0->mass)/(1.1*radius));
     s1->vel[1] = 0.0;
     s1->vel[2] = 0.0;
     s1->radius = 2.5E9;
-    s1->rgb[0] = 0;
-    s1->rgb[1] = 127;
-    s1->rgb[2] = 255;
+    s1->rgb[0] = 64;
+    s1->rgb[1] = 255;
+    s1->rgb[2] = 64;
     add_star(g, s1);
     
     g->radius = radius;
@@ -453,8 +453,7 @@ int main(int argc, char *argv[])
     }
         
     //GALAXY *g = create_solar_system_2();
-    //g = create_disc_galaxy(2.5E11, 5000);
-    g = create_square_galaxy(2.5E11, 1000);
+    g = create_disc_galaxy(2.5E11, 5000);
     
     #define SECONDS_PER_YEAR 365.242199*24*3600
     
