@@ -108,6 +108,43 @@ void ReadPixel(SDL_Surface *screen, Uint8 *R, Uint8 *G, Uint8 *B, int x, int y)
     }
 }
 
+/* Adapted from http://content.gpwiki.org/index.php/SDL:Tutorials:Drawing_and_Filling_Circles */
+void FillCircle(SDL_Surface *surface, int cx, int cy, int radius, Uint8 R, Uint8 G, Uint8 B)
+{
+    static const int BPP = 4;
+
+    double r = (double) radius;
+    Uint32 pixel = SDL_MapRGB(surface->format, R, G, B);
+    double dy;
+
+    for (dy = 1; dy <= r; dy += 1.0)
+    {
+        double dx = floor(sqrt((2.0 * r * dy) - (dy * dy)));
+        int x = cx - dx;
+        int x2 = cx + dx;
+        
+        if (cy - r + dy < 0 || cy + r - dy >= surface->h)
+            continue;
+    
+        if (x < 0)
+            x = 0;
+        if (x2 >= surface->w)
+            x2 = surface->w-1;
+
+        Uint8 *target_pixel_a = (Uint8 *)surface->pixels + ((int)(cy + r - dy)) * surface->pitch + x * BPP;
+        Uint8 *target_pixel_b = (Uint8 *)surface->pixels + ((int)(cy - r + dy)) * surface->pitch + x * BPP;
+           
+        for (; x <= x2; x++)
+        {
+            *(Uint32 *)target_pixel_a = pixel;
+            *(Uint32 *)target_pixel_b = pixel;
+            target_pixel_a += BPP;
+            target_pixel_b += BPP;
+        }
+    }
+}
+
+
 void calculate_frame(GALAXY *g, double timestep)
 {
     VECTOR *forces;
@@ -313,7 +350,11 @@ static void draw_star(unsigned char *buffer, int px, int py, int width, int heig
     double rad = star->radius * zoom * width;
     
     put_pixel(buffer, px, py, width, height, star->rgb);
-    if (rad >= 0.5)
+    if (rad > 5.0)
+    {
+        FillCircle(display, px, py, (int) (rad/2), star->rgb[0], star->rgb[1], star->rgb[2]);
+    }
+    else if (rad >= 0.5)
     {
         put_pixel(buffer, px, py-1, width, height, star->rgb);
         put_pixel(buffer, px-1, py, width, height, star->rgb);
