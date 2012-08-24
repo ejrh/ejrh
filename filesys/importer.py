@@ -90,6 +90,41 @@ class Importer(object):
         return items
 
 
+    def get_duplicates(self, child_list):
+        dupes = {}
+        
+        for i in range(0, len(child_list), 500):
+            chunk = child_list[i:i + 500]
+            
+            params = []
+            for child_item in chunk:
+                dupes[child_item.name] = []
+                size_str = child_item.size
+                if size_str is None:
+                    size_str = -1
+                modified_str = child_item.modified
+                if modified_str is None:
+                    modified_str = 'epoch'
+                params.append((child_item.name, size_str, modified_str))
+            try:
+                self.db.execute("""EXECUTE bulk_find_duplicates(%s::name_size_modified[])""", [params])
+            except Exception, inst:
+                exception_info("Couldn't find duplicates with list %s" % params, inst)
+                raise
+            rows = self.db.fetchall()
+            for r in rows:
+                dupe_item = Item()
+                dupe_item.id = r['id']
+                dupe_item.name = self.db_decode(r['name'])[0]
+                dupe_item.size = r['size']
+                dupe_item.modified = str(r['modified'])
+                dupe_item.md5 = r['md5']
+                orig_name = self.db_decode(r['orig_name'])[0]
+                dupes[orig_name].append(dupe_item)
+        
+        return dupes
+
+
     def process_duplicates(self, item, dupes):
         dupe_items = dupes[item.name]
         
@@ -196,33 +231,7 @@ class Importer(object):
         md5_parts = []
         
         child_list = self.get_list(item.path)
-        
-        dupes = {}
-        params = []
-        for child_item in child_list:
-            dupes[child_item.name] = []
-            size_str = child_item.size
-            if size_str is None:
-                size_str = -1
-            modified_str = child_item.modified
-            if modified_str is None:
-                modified_str = 'epoch'
-            params.append((child_item.name, size_str, modified_str))
-        try:
-            self.db.execute("""EXECUTE bulk_find_duplicates(%s::name_size_modified[])""", [params])
-        except Exception, inst:
-            exception_info("Couldn't find duplicates with list %s" % params, inst)
-            raise
-        rows = self.db.fetchall()
-        for r in rows:
-            dupe_item = Item()
-            dupe_item.id = r['id']
-            dupe_item.name = self.db_decode(r['name'])[0]
-            dupe_item.size = r['size']
-            dupe_item.modified = str(r['modified'])
-            dupe_item.md5 = r['md5']
-            orig_name = self.db_decode(r['orig_name'])[0]
-            dupes[orig_name].append(dupe_item)
+        dupes = self.get_duplicates(child_list)
         
         for child_item in child_list:
             if not child_item.is_dir:
