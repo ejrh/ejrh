@@ -15,6 +15,8 @@ class ImageImporter(object):
         self.exception_info = exception_info
         self.prepare_queries()
         
+        self.create_feature_map()
+    
     def prepare_queries(self):
         self.db.prepare("""PREPARE find_image_dups(VARCHAR) AS SELECT
                i.id,
@@ -30,22 +32,37 @@ class ImageImporter(object):
                 f.id DESC
             LIMIT 1""")
         
-        self.db.prepare("""PREPARE insert_image(INTEGER, INTEGER,
-                DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION,
-                DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION,
-                DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION) AS INSERT INTO image (width, height,
-                    ravg, gavg, bavg, savg, lavg,
-                    rsd, gsd, bsd, ssd, lsd,
-                    rlavg, glavg, blavg)
-                VALUES ($1, $2,
-                    $3, $4, $5, $6, $7,
-                    $8, $9, $10, $11, $12,
-                    $13, $14, $15)
+        self.db.prepare("""PREPARE insert_image(INTEGER, INTEGER) AS INSERT INTO image (width, height)
+                VALUES ($1, $2)
+            RETURNING id""")
+
+        self.db.prepare("""PREPARE insert_image_point(INTEGER, cube) AS INSERT INTO image_point (id, point)
+                VALUES ($1, $2)
             RETURNING id""")
 
         self.db.prepare("""PREPARE insert_thumbnail(INTEGER, BYTEA) AS INSERT INTO thumbnail (id, thumbnail) VALUES ($1, $2)""")
         
         self.db.prepare("""PREPARE find_image_file(INTEGER) AS SELECT file_id FROM file_is_image WHERE file_id = $1""")
+        
+        self.db.prepare("""PREPARE get_features AS SELECT id, name FROM image_feature""")
+
+    def create_feature_map(self):
+        self.feature_map = {}
+        
+        self.db.execute("""EXECUTE get_features""");
+        rows = self.db.fetchall()
+        for r in rows:
+            id, name = r['id'], r['name']
+            self.feature_map[name] = id
+        
+        self.max_feature_id = max(self.feature_map.values())
+    
+    def get_point_str(self, values):
+        vals = [0.0]*self.max_feature_id
+        for name, pos in self.feature_map.iteritems():
+            val = values[name]
+            vals[pos-1] = val
+        return '(' + ','.join([repr(x) for x in vals]) + ')'
 
     def import_image(self, filename, md5):
         
@@ -137,17 +154,16 @@ class ImageImporter(object):
             glavg = (lavg - gavg) * 0.75 + 0.5
             blavg = (lavg - bavg) * 0.75 + 0.5
             
-            params = {'width': width, 'height': height,
-                'ravg': ravg, 'gavg': gavg, 'bavg': bavg, 'savg': savg, 'lavg': lavg,
-                'rsd': rsd, 'gsd': gsd, 'bsd': bsd, 'ssd': ssd, 'lsd': lsd,
-                'rlavg': rlavg, 'glavg': glavg, 'blavg': blavg}
-            self.db.execute("""EXECUTE insert_image(%(width)s, %(height)s,
-                        %(ravg)s, %(gavg)s, %(bavg)s, %(savg)s, %(lavg)s,
-                        %(rsd)s, %(gsd)s, %(bsd)s, %(ssd)s, %(lsd)s,
-                        %(rlavg)s, %(glavg)s, %(blavg)s)""", params)
+            params = {'width': width, 'height': height}
+            self.db.execute("""EXECUTE insert_image(%(width)s, %(height)s)""", params)
             self.db.altered = True
             rows = self.db.fetchall()
             image_id = rows[0]['id']
+            
+            point_str = self.get_point_str(locals())
+            params = {'image_id': image_id, 'point': point_str}
+            self.db.execute("""EXECUTE insert_image_point(%(image_id)s, %(point)s)""", params)
+            
 
         # Create a thumbnail.
         try:
