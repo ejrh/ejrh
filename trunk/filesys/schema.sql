@@ -128,26 +128,25 @@ CREATE TABLE image
     width INTEGER,
     height INTEGER,
     
-    ravg FLOAT,
-    gavg FLOAT,
-    bavg FLOAT,
-    savg FLOAT,
-    lavg FLOAT,
-    
-    rsd FLOAT,
-    gsd FLOAT,
-    bsd FLOAT,
-    ssd FLOAT,
-    lsd FLOAT,
-    
-    rlavg FLOAT,
-    glavg FLOAT,
-    blavg FLOAT,
-    
     CONSTRAINT image_pk_id PRIMARY KEY (id)
 ) WITHOUT OIDS;
 
 CLUSTER image_pk_id ON image;
+
+
+CREATE TABLE image_point
+(
+    id INTEGER NOT NULL,
+    point cube NOT NULL,
+    
+    CONSTRAINT image_point_pk_id PRIMARY KEY (id),
+    
+    CONSTRAINT image_point_fk_id FOREIGN KEY (id) REFERENCES image (id)
+        ON DELETE CASCADE
+    
+) WITHOUT OIDS;
+
+CREATE INDEX ON image_point USING GIST (point);
 
 
 CREATE TABLE extra.thumbnail
@@ -181,26 +180,29 @@ CREATE INDEX file_is_image_ix_image_id ON file_is_image (image_id);
 CLUSTER file_is_image_ix_image_id ON file_is_image;
 
 
-CREATE TABLE image_weights
+CREATE TABLE image_feature
 (
-    ravg FLOAT DEFAULT 1.0,
-    gavg FLOAT DEFAULT 1.0,
-    bavg FLOAT DEFAULT 1.0,
-    savg FLOAT DEFAULT 1.0,
-    lavg FLOAT DEFAULT 1.0,
+    id INTEGER NOT NULL,
+    name VARCHAR NOT NULL,
+    weight FLOAT NOT NULL DEFAULT 1.0,
     
-    rsd FLOAT DEFAULT 1.0,
-    gsd FLOAT DEFAULT 1.0,
-    bsd FLOAT DEFAULT 1.0,
-    ssd FLOAT DEFAULT 1.0,
-    lsd FLOAT DEFAULT 1.0,
-    
-    rlavg FLOAT DEFAULT 1.0,
-    glavg FLOAT DEFAULT 1.0,
-    blavg FLOAT DEFAULT 1.0
+    CONSTRAINT image_feature_pk_id PRIMARY KEY (id)
+
 ) WITHOUT OIDS;
 
-INSERT INTO image_weights DEFAULT VALUES;
+INSERT INTO image_feature VALUES (1, 'ravg', 1.0);
+INSERT INTO image_feature VALUES (2, 'gavg', 1.0);
+INSERT INTO image_feature VALUES (3, 'bavg', 1.0);
+INSERT INTO image_feature VALUES (4, 'savg', 1.0);
+INSERT INTO image_feature VALUES (5, 'lavg', 1.0);
+INSERT INTO image_feature VALUES (6, 'rsd', 1.0);
+INSERT INTO image_feature VALUES (7, 'gsd', 1.0);
+INSERT INTO image_feature VALUES (8, 'bsd', 1.0);
+INSERT INTO image_feature VALUES (9, 'ssd', 1.0);
+INSERT INTO image_feature VALUES (10, 'lsd', 1.0);
+INSERT INTO image_feature VALUES (11, 'rlavg', 1.0);
+INSERT INTO image_feature VALUES (12, 'glavg', 1.0);
+INSERT INTO image_feature VALUES (13, 'blavg', 1.0);
 
 
 CREATE TABLE orphan
@@ -253,7 +255,7 @@ INSERT INTO config DEFAULT VALUES;
 
 GRANT SELECT,INSERT,UPDATE,DELETE ON
     file, directory, drive, revision, file_in_dir,
-    image, image_weights, extra.thumbnail, file_is_image,
+    image, image_point, image_feature, extra.thumbnail, file_is_image,
     deleted, config
 TO localuser;
 

@@ -179,29 +179,6 @@ BEGIN
 END;
 $$;
 
--- image_distance(a, b)
-CREATE OR REPLACE FUNCTION image_distance(image_weights, image, image) RETURNS float
-STABLE
-STRICT
-LANGUAGE 'sql' AS
-$$
-    SELECT SQRT($1.ravg  * POWER($2.ravg  - $3.ravg,  2)
-               + $1.gavg  * POWER($2.gavg  - $3.gavg,  2)
-               + $1.bavg  * POWER($2.bavg  - $3.bavg,  2)
-               + $1.savg  * POWER($2.savg  - $3.savg,  2)
-               + $1.lavg  * POWER($2.lavg  - $3.lavg,  2)
-               + $1.rsd   * POWER($2.rsd   - $3.rsd,   2)
-               + $1.gsd   * POWER($2.gsd   - $3.gsd,   2)
-               + $1.bsd   * POWER($2.bsd   - $3.bsd,   2)
-               + $1.ssd   * POWER($2.ssd   - $3.ssd,   2)
-               + $1.lsd   * POWER($2.lsd   - $3.lsd,   2)
-               + $1.blavg * POWER($2.rlavg - $3.rlavg, 2)
-               + $1.glavg * POWER($2.glavg - $3.glavg, 2)
-               + $1.blavg * POWER($2.blavg - $3.blavg, 2));
-$$;
-
-
-
 -- This trigger function ensures that (dir_id, name) is unique on
 -- file_in_dir JOIN file ON file_id = id.  Triggers are defined on
 -- INSERT and UPDATE to file_in_dir, and UPDATE to file (for when
