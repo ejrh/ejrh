@@ -95,13 +95,13 @@ DECLARE
 BEGIN
     FOR r IN SELECT dir_id FROM file_in_dir WHERE file_id = $1 LOOP
         FOR r2 IN SELECT * FROM all_paths(r.dir_id) LOOP
-            RETURN NEXT array_append(r2.all_paths, $1);
+            RETURN NEXT array_append(r2.all_paths, $1::INTEGER);
         END LOOP;
         SELECT INTO b TRUE;
     END LOOP;
     
     IF NOT b THEN
-        RETURN NEXT ARRAY[$1];
+        RETURN NEXT ARRAY[$1::INTEGER];
     END IF;
     
     RETURN;
