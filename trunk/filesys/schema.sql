@@ -21,10 +21,6 @@ SELECT pg_database.oid, pg_roles.oid, '{"search_path=$user,public,extra,contrib"
 FROM pg_database, pg_roles
 WHERE pg_database.datname = current_database() AND pg_roles.rolname = 'localuser';
 
-CREATE DOMAIN RevisionId AS INTEGER;
-CREATE DOMAIN FileId AS INTEGER;
-CREATE DOMAIN ImageId AS INTEGER;
-
 CREATE TABLE file
 (
     id SERIAL NOT NULL,
@@ -48,7 +44,7 @@ CREATE INDEX file_ix_lower_name ON file (lower(name));
 
 CREATE TABLE directory
 (
-    id FileId NOT NULL,
+    id INTEGER NOT NULL,
     children INTEGER NOT NULL,
     descendants INTEGER NOT NULL,
     
@@ -65,7 +61,7 @@ CLUSTER directory_pk_id ON directory;
 
 CREATE TABLE drive
 (
-    id FileId NOT NULL,
+    id INTEGER NOT NULL,
     free_space BIGINT,
     total_space BIGINT,
     
@@ -83,9 +79,9 @@ CLUSTER drive_pk_id ON drive;
 
 CREATE TABLE revision
 (
-    rev_id RevisionId NOT NULL,
+    rev_id INTEGER NOT NULL,
     time TIMESTAMP NOT NULL,
-    root_id FileId NOT NULL,
+    root_id INTEGER NOT NULL,
     
     CONSTRAINT revision_pk_rev_id PRIMARY KEY (rev_id),
     
@@ -101,8 +97,8 @@ CREATE INDEX revision_ix_root_id ON revision (root_id);
 
 CREATE TABLE file_in_dir
 (
-    file_id FileId NOT NULL,
-    dir_id FileId NOT NULL,
+    file_id INTEGER NOT NULL,
+    dir_id INTEGER NOT NULL,
     
     CONSTRAINT file_in_dir_pk_dir_id_file_id PRIMARY KEY (dir_id, file_id),
     
@@ -151,7 +147,7 @@ CREATE INDEX ON image_point USING GIST (point);
 
 CREATE TABLE extra.thumbnail
 (
-    id ImageId NOT NULL,
+    id INTEGER NOT NULL,
     thumbnail BYTEA,
     
     CONSTRAINT thumbnail_pk_id PRIMARY KEY (id),
@@ -163,8 +159,8 @@ CREATE TABLE extra.thumbnail
 
 CREATE TABLE file_is_image
 (
-    file_id FileId NOT NULL,
-    image_id ImageId NOT NULL,
+    file_id INTEGER NOT NULL,
+    image_id INTEGER NOT NULL,
     
     CONSTRAINT file_is_image_pk_file_id PRIMARY KEY (file_id),
     
@@ -207,7 +203,7 @@ INSERT INTO image_feature VALUES (13, 'blavg', 1.0);
 
 CREATE TABLE orphan
 (
-    id FileId,
+    id INTEGER,
     CONSTRAINT orphan_pk_id PRIMARY KEY (id),
     CONSTRAINT orphan_fk_id FOREIGN KEY (id) REFERENCES file (id) ON DELETE CASCADE
 ) WITHOUT OIDS;
@@ -217,8 +213,8 @@ CLUSTER orphan_pk_id ON orphan;
 
 CREATE TABLE deleted
 (
-    id FileId,
-    duplicate_of FileId,
+    id INTEGER,
+    duplicate_of INTEGER,
     
     CONSTRAINT deleted_pk_id PRIMARY KEY (id),
     
