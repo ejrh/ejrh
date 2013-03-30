@@ -43,7 +43,7 @@ class Importer(object):
         self.db.prepare("""PREPARE bulk_find_duplicates(name_size_modified[]) AS SELECT
                 orig_name, id, name, size, modified, md5
             FROM
-                find_duplicates($1) AS fd(orig_name VARCHAR, id FileId, name VARCHAR, size BIGINT, modified TIMESTAMP, md5 VARCHAR)""")
+                find_duplicates($1) AS fd(orig_name VARCHAR, id INTEGER, name VARCHAR, size BIGINT, modified TIMESTAMP, md5 VARCHAR)""")
 
         self.db.prepare("""PREPARE set_modified(INTEGER, TEXT, TIMESTAMP) AS UPDATE file SET name = $2, modified = $3 WHERE id = $1""")
 
