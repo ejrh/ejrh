@@ -122,6 +122,9 @@ void FillCircle(SDL_Surface *surface, int cx, int cy, int radius, Uint8 R, Uint8
         double dx = floor(sqrt((2.0 * r * dy) - (dy * dy)));
         int x = cx - dx;
         int x2 = cx + dx;
+
+		Uint8 *target_pixel_a;
+		Uint8 *target_pixel_b;
         
         if (cy - r + dy < 0 || cy + r - dy >= surface->h)
             continue;
@@ -131,8 +134,8 @@ void FillCircle(SDL_Surface *surface, int cx, int cy, int radius, Uint8 R, Uint8
         if (x2 >= surface->w)
             x2 = surface->w-1;
 
-        Uint8 *target_pixel_a = (Uint8 *)surface->pixels + ((int)(cy + r - dy)) * surface->pitch + x * BPP;
-        Uint8 *target_pixel_b = (Uint8 *)surface->pixels + ((int)(cy - r + dy)) * surface->pitch + x * BPP;
+        target_pixel_a = (Uint8 *)surface->pixels + ((int)(cy + r - dy)) * surface->pitch + x * BPP;
+        target_pixel_b = (Uint8 *)surface->pixels + ((int)(cy - r + dy)) * surface->pitch + x * BPP;
            
         for (; x <= x2; x++)
         {
@@ -375,21 +378,6 @@ static GALAXY *create_saturn_system()
         { "Paaliaq", { -6.153243437034428119659423828125000000000000000000e+08, 1.226394505416218948364257812500000000000000000000e+10, 1.217254859470880889892578125000000000000000000000e+10 }, { -1.136397738417278105771401897072792053222656250000e+03, -3.386275122946221927122678607702255249023437500000e+02, -6.572132212430821027737692929804325103759765625000e+02 }, 1.000000000000000000000000000000000000000000000000e+00, 1.000000000000000000000000000000000000000000000000e+00 },
     };
     
-    GALAXY *g = create_galaxy();
-    
-    for (i = 0; i < sizeof(data)/sizeof(STAR); i++)
-    {
-        STAR *s = create_star();
-        *s = data[i];
-        if (s->rgb[0] == 0 && s->rgb[1] == 0 && s->rgb[2] == 0)
-        {
-            s->rgb[0] = 255;
-            s->rgb[1] = 255;
-            s->rgb[2] = 255;
-        }
-        add_star(g, s);
-    }
-    
     RING_DEF rings[] = {
         { "D Ring", 6.69E+7, 7.451E+7, 1E-13, { 216, 127, 127 } },
         { "C Ring", 7.4658E+7, 9.2E+7, 1E-13, { 216, 216, 127 } },
@@ -407,6 +395,21 @@ static GALAXY *create_saturn_system()
         { "Phoebe Ring", 4E+9, 1.3E+10 }, */
     };
 
+    GALAXY *g = create_galaxy();
+    
+    for (i = 0; i < sizeof(data)/sizeof(STAR); i++)
+    {
+        STAR *s = create_star();
+        *s = data[i];
+        if (s->rgb[0] == 0 && s->rgb[1] == 0 && s->rgb[2] == 0)
+        {
+            s->rgb[0] = 255;
+            s->rgb[1] = 255;
+            s->rgb[2] = 255;
+        }
+        add_star(g, s);
+    }
+    
     for (i = 0; i < sizeof(rings)/sizeof(RING_DEF); i++)
     {
         RING_DEF *ring = &rings[i];
