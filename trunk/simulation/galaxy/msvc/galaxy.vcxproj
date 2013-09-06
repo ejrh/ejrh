@@ -50,8 +50,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\edmund\sc2\SDL-1.2.11\include;C:\edmund\sc2\SDL_ttf-2.0.10\include;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
-    <LibraryPath>C:\edmund\sc2\SDL-1.2.11\lib;C:\edmund\sc2\SDL_ttf-2.0.10\lib;C:\edmund\sc2\vcomp;$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib</LibraryPath>
+    <IncludePath>D:\edmund\lib\SDL2-2.0.0\include;D:\edmund\lib\SDL2_ttf-2.0.12\include;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
+    <LibraryPath>D:\edmund\lib\SDL2-2.0.0\lib;D:\edmund\lib\SDL2_ttf-2.0.12\lib;C:\edmund\sc2\vcomp;$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
