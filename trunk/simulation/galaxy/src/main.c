@@ -547,6 +547,7 @@ int main(int argc, char *argv[])
     FILE *f;
     TTF_Font *font;
     SDL_Event evt;
+	SDL_Window *window;
 
     GALAXY *g;
     int num_frames;
@@ -568,10 +569,12 @@ int main(int argc, char *argv[])
     if (!font)
         error();
 
-    display = SDL_SetVideoMode(WIDTH, HEIGHT, 32, SDL_HWSURFACE | SDL_DOUBLEBUF);
-    if(display == NULL) {
+    window = SDL_CreateWindow("Galaxy Simulation", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, 0);
+    if (window == NULL) {
         error();
     }
+
+	display = SDL_GetWindowSurface(window);
         
     //GALAXY *g = create_solar_system_2();
     //g = create_disc_galaxy(2.5E11, 5000);
@@ -590,7 +593,7 @@ int main(int argc, char *argv[])
     update_galaxy(g);
     recentre_galaxy(g);
     draw_image(g, scale);
-    SDL_UpdateRect(display, 0, 0, WIDTH, HEIGHT);
+    SDL_UpdateWindowSurface(window);
     
     //f = fopen("stars.dat", "wb");
     for (i = 0; i < num_frames; i++)
@@ -639,7 +642,7 @@ int main(int argc, char *argv[])
             SDL_FreeSurface(txt);
         }
         
-        SDL_UpdateRect(display, 0, 0, WIDTH, HEIGHT);
+        SDL_UpdateWindowSurface(window);
         
         if (i % frames_per_image == 0)
         {
@@ -659,6 +662,8 @@ int main(int argc, char *argv[])
     //fclose(f);
     
     destroy_galaxy(g);
+
+	SDL_DestroyWindow(window);
     
     TTF_Quit();
         
